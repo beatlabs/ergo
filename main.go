@@ -10,17 +10,18 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
-var lastReleased string
+var baseSHA1 string
 
-// Basic example of how to clone a repository using clone options.
 func main() {
 	var repoURL string
 	var directory string
 	var skipFetch bool
+	var goBackTags int
 	var err error
 	flag.StringVar(&repoURL, "repoUrl", "", "git repo Url. ssh and https supported")
 	flag.StringVar(&directory, "directory", "", "Location to store or retrieve from the repo")
-	flag.BoolVar(&skipFetch, "skipFetch", false, "When true on an existing repo, it will not fetch the latest commits from remote ")
+	flag.BoolVar(&skipFetch, "skipFetch", false, "When true on an existing repo, it will not fetch the latest commits from remote")
+	flag.IntVar(&goBackTags, "goBackTags", 1, "Number of tags to go back for base. Defaults to 1, last tag")
 	flag.Parse()
 
 	if directory == "" {
@@ -69,18 +70,29 @@ func main() {
 		}
 	}
 
-	cmd := fmt.Sprintf("cd %s && git rev-list --tags --max-count=1", directory)
+	gitFindTagSha1Cmd := fmt.Sprintf("git log --tags --no-walk --pretty=\"format:%%d\" | sed %dq | sed 's/[()]//g' | sed s/,[^,]*$// | sed  's ......  '", goBackTags)
+	cmd := fmt.Sprintf("cd %s && %s |tail -n 1", directory, gitFindTagSha1Cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 
 	if err != nil {
 		fmt.Printf("error executing %s:%s\n", cmd, err)
 		return
 	}
-	lastReleased = strings.TrimSpace(string(out))
 
-	fmt.Printf("Last Released sha1: %s", lastReleased)
+	baseTag := strings.TrimSpace(string(out))
 
-	// displayBranch(repo, "develop")
+	reference := fmt.Sprintf("refs/tags/%s", baseTag)
+	baseRef, err := repo.Reference(plumbing.ReferenceName(reference), true)
+	if err != nil {
+		fmt.Printf("Could not load tag %s:%s", baseTag, err)
+		return
+	}
+
+	baseSHA1 = baseRef.Hash().String()
+
+	fmt.Printf("\n********** B A S E **********\ntag: %s\nsha1: %s\n*****************************\n", baseTag, baseSHA1)
+
+	displayBranch(repo, "develop")
 	displayBranch(repo, "master")
 	displayBranch(repo, "release-gr")
 	displayBranch(repo, "release-pe")
@@ -89,17 +101,17 @@ func main() {
 }
 
 func displayBranch(repo *git.Repository, branch string) {
-	fmt.Printf("\n\n%s\n", branch)
+	fmt.Printf("\n%s\n", branch)
 	var reference string
 	reference = fmt.Sprintf("refs/remotes/origin/%s", branch)
 
-	releasePeRef, err := repo.Reference(plumbing.ReferenceName(reference), true)
+	releaseRef, err := repo.Reference(plumbing.ReferenceName(reference), true)
 	if err != nil {
 		fmt.Printf("Error loading reference %s:%s", reference, err)
 		return
 	}
 
-	cIter, err := repo.Log(&git.LogOptions{From: releasePeRef.Hash()})
+	cIter, err := repo.Log(&git.LogOptions{From: releaseRef.Hash()})
 
 	i := 0
 	for {
@@ -119,7 +131,7 @@ func displayBranch(repo *git.Repository, branch string) {
 		// 	continue
 		// }
 
-		if commit.Hash.String() == lastReleased {
+		if commit.Hash.String() == baseSHA1 {
 			break
 		}
 

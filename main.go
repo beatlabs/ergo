@@ -15,7 +15,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
-// DiffCommitBranch for a given branch and base branch stores commits ahead and commits behind
+// DiffCommitBranch commits ahead and commits behind for a given branch and base branch
 type DiffCommitBranch struct {
 	branch     string
 	baseBranch string
@@ -30,10 +30,12 @@ func main() {
 	var baseBranch string
 	var branchesString string
 	var err error
+	var diff []DiffCommitBranch
+
 	flag.StringVar(&repoURL, "repoUrl", "", "git repo Url. ssh and https supported")
 	flag.StringVar(&directory, "directory", "", "Location to store or retrieve from the repo")
 	flag.BoolVar(&skipFetch, "skipFetch", false, "When true on an existing repo, it will not fetch the latest commits from remote")
-	flag.StringVar(&baseBranch, "baseBranch", "", "Base Reference for comparison. If empty, tags will be used")
+	flag.StringVar(&baseBranch, "baseBranch", "master", "Base Reference for comparison. If empty, tags will be used")
 	flag.StringVar(&branchesString, "branches", "", "Comma separated list of branches")
 	flag.Parse()
 
@@ -43,7 +45,10 @@ func main() {
 		return
 	}
 
-	diff := []DiffCommitBranch{}
+	if branchesString == "" {
+		fmt.Printf("no branches to compare, use -branches\n")
+		return
+	}
 
 	branches := strings.Split(branchesString, ",")
 	for _, branch := range branches {

@@ -1,21 +1,27 @@
 package main
 
 import (
-	"os/exec"
-
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
-
-	"github.com/pkg/errors"
-
 	"flag"
 	"fmt"
+	"os/exec"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/pkg/errors"
+	"github.com/rodaine/table"
 
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
-var baseSHA1 string
+// DiffCommitBranch for a given branch and base branch stores commits ahead and commits behind
+type DiffCommitBranch struct {
+	branch     string
+	baseBranch string
+	ahead      []*object.Commit
+	behind     []*object.Commit
+}
 
 func main() {
 	var repoURL string
@@ -37,34 +43,25 @@ func main() {
 		return
 	}
 
-	baseRef, err := baseReference(repo, directory, baseBranch)
-	if err != nil {
-		fmt.Printf("Error loading reference:%s\n", err)
-		return
-	}
+	diff := []DiffCommitBranch{}
 
-	baseSHA1 = baseRef.Hash().String()
-
-	fmt.Printf("\nbase branch: %s\n", baseBranch)
-
-	// compareBranch(repo, "develop")
-	// compareBranch(repo, baseBranch, "master", directory)
-	// compareBranch(repo, baseBranch, "release-gr", directory)
-	fmt.Println(branchesString)
 	branches := strings.Split(branchesString, ",")
-	// branches := []string{"release-pe", "release-gr", "release-cl", "release-co"}
 	for _, branch := range branches {
 		ahead, behind, err := compareBranch(repo, baseBranch, branch, directory)
 		if err != nil {
 			fmt.Printf("error comparing %s %s:%s\n", baseBranch, branch, err)
 			return
 		}
-		fmt.Println(branch)
-		fmt.Println(len(ahead))
-		fmt.Println(len(behind))
+		branchCommitDiff := DiffCommitBranch{
+			branch:     branch,
+			baseBranch: baseBranch,
+			ahead:      ahead,
+			behind:     behind,
+		}
+		diff = append(diff, branchCommitDiff)
 	}
-	// compareBranch(repo, baseBranch, "release-cl", directory)
-	// compareBranch(repo, baseBranch, "release-co", directory)
+
+	printBranchCompare(diff)
 }
 
 func loadOrClone(repoURL string, directory string, remoteName string, skipFetch bool) (*git.Repository, error) {
@@ -150,12 +147,15 @@ func commitsAhead(repo *git.Repository, branch string, commonAncestor string) ([
 	reference = fmt.Sprintf("refs/remotes/origin/%s", branch)
 	ref, err := repo.Reference(plumbing.ReferenceName(reference), true)
 	if err != nil {
-		return nil, errors.Wrap(err, "loading reference")
+		return nil, errors.Wrap(err, fmt.Sprintf("loading reference %s", reference))
 	}
 
 	cIter, err := repo.Log(&git.LogOptions{From: ref.Hash()})
+	if err != nil {
+		return nil, errors.Wrap(err, "branch log")
+	}
 	defer cIter.Close()
-	i := 0
+
 	for {
 		commit, err := cIter.Next()
 		if err != nil {
@@ -166,13 +166,8 @@ func commitsAhead(repo *git.Repository, branch string, commonAncestor string) ([
 			break
 		}
 		ahead = append(ahead, commit)
-
-		// in case something went wrong, skip after 50 commits
-		if i > 50 {
-			return nil, errors.New("more than 50 commits difference. Write some code to bypass this")
-		}
-		i++
 	}
+
 	return ahead, nil
 }
 
@@ -183,6 +178,26 @@ func mergeBase(branch1 string, branch2 string, directory string) (string, error)
 	if err != nil {
 		return "", errors.Wrap(err, "executing external command")
 	}
-	return strings.TrimSpace(string(out)), nil
 
+	return strings.TrimSpace(string(out)), nil
+}
+
+func printBranchCompare(commitDiffBranches []DiffCommitBranch) {
+	blue := color.New(color.FgCyan)
+	yellow := color.New(color.FgYellow)
+	fmt.Println()
+	blue.Print("BASE: ")
+	yellow.Println(commitDiffBranches[0].baseBranch)
+
+	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
+	columnFmt := color.New(color.FgYellow).SprintfFunc()
+
+	tbl := table.New("Branch", "Behind", "Ahead")
+	tbl.WithHeaderFormatter(headerFmt).WithFirstColumnFormatter(columnFmt)
+
+	for _, diffBranch := range commitDiffBranches {
+		tbl.AddRow(diffBranch.branch, len(diffBranch.behind), len(diffBranch.ahead))
+	}
+
+	tbl.Print()
 }

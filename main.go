@@ -39,7 +39,7 @@ func main() {
 
 	baseRef, err := baseReference(repo, directory, baseBranch)
 	if err != nil {
-		fmt.Printf("Error loading reference:%s", err)
+		fmt.Printf("Error loading reference:%s\n", err)
 		return
 	}
 
@@ -56,7 +56,7 @@ func main() {
 	for _, branch := range branches {
 		ahead, behind, err := compareBranch(repo, baseBranch, branch, directory)
 		if err != nil {
-			fmt.Printf("error comparing %s %s:%s", baseBranch, branch, err)
+			fmt.Printf("error comparing %s %s:%s\n", baseBranch, branch, err)
 			return
 		}
 		fmt.Println(branch)
@@ -134,11 +134,11 @@ func compareBranch(repo *git.Repository, baseBranch string, branch string, direc
 
 	ahead, err = commitsAhead(repo, branch, commonAncestor)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "Comparing branches")
+		return nil, nil, errors.Wrap(err, "comparing branches")
 	}
 	behind, err = commitsAhead(repo, baseBranch, commonAncestor)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "Comparing branches")
+		return nil, nil, errors.Wrap(err, "comparing branches")
 	}
 
 	return ahead, behind, nil

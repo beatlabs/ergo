@@ -53,7 +53,7 @@ func loadOrClone(repoURL string, directory string, remoteName string, skipFetch 
 	}
 
 	if !skipFetch {
-		fmt.Printf("Fetching remote %s (next time, use -skipFetch to skip)\n", remoteName)
+		fmt.Printf("Fetching remote %s (use -skipFetch to skip)\n", remoteName)
 		err = remote.Fetch(&git.FetchOptions{})
 		if err != nil {
 			if !strings.Contains(err.Error(), "already up-to-date") {

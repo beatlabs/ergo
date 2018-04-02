@@ -25,7 +25,7 @@ func loadOrClone(repoURL string, directory string, remoteName string, skipFetch 
 	var err error
 
 	if directory == "" {
-		return nil, errors.New("no directory provided")
+		return nil, fmt.Errorf("no directory provided")
 	}
 
 	if repoURL != "" {
@@ -57,8 +57,7 @@ func loadOrClone(repoURL string, directory string, remoteName string, skipFetch 
 		err = remote.Fetch(&git.FetchOptions{})
 		if err != nil {
 			if !strings.Contains(err.Error(), "already up-to-date") {
-				msg := fmt.Sprintf("unable to fetch remote %s: %s\n", remoteName, err)
-				return repo, errors.New(msg)
+				return repo, fmt.Errorf("unable to fetch remote %s: %s", remoteName, err)
 			}
 			fmt.Println(err)
 		}
@@ -72,8 +71,7 @@ func baseReference(repo *git.Repository, directory string, baseBranch string) (*
 	baseRef, err := repo.Reference(plumbing.ReferenceName(baseRefText), true)
 
 	if err != nil {
-		msg := fmt.Sprintf("could not load ref %s:%s", baseRefText, err)
-		return nil, errors.New(msg)
+		return nil, fmt.Errorf("could not load ref %s:%s", baseRefText, err)
 	}
 
 	return baseRef, nil

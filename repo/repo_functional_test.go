@@ -1,4 +1,4 @@
-package main
+package repo
 
 import (
 	"os"
@@ -10,17 +10,17 @@ func TestLoadOrClone(t *testing.T) {
 	repoURL := "https://github.com/dbaltas/ergo.git"
 	skipFetch := true
 
-	repoFromClone, err := loadOrClone(repoURL, directory, "origin", skipFetch)
+	repoFromClone, err := LoadOrClone(repoURL, directory, "origin", skipFetch)
 	if err != nil || repoFromClone == nil {
 		t.Errorf("Error cloning repo:%s\n", err)
 		return
 	}
-	repoFromSecondClone, err := loadOrClone(repoURL, directory, "origin", skipFetch)
+	repoFromSecondClone, err := LoadOrClone(repoURL, directory, "origin", skipFetch)
 	if repoFromSecondClone != nil {
 		t.Errorf("Expected 'repository already exists' error")
 		return
 	}
-	repoFromPath, err := loadOrClone("", directory, "origin", skipFetch)
+	repoFromPath, err := LoadOrClone("", directory, "origin", skipFetch)
 	if err != nil || repoFromPath == nil {
 		t.Errorf("error loading repo from path: %s", err)
 		return

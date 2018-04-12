@@ -1,4 +1,4 @@
-package main
+package repo
 
 import (
 	"fmt"
@@ -14,13 +14,14 @@ import (
 
 // DiffCommitBranch commits ahead and commits behind for a given branch and base branch
 type DiffCommitBranch struct {
-	branch     string
-	baseBranch string
-	ahead      []*object.Commit
-	behind     []*object.Commit
+	Branch     string
+	BaseBranch string
+	Ahead      []*object.Commit
+	Behind     []*object.Commit
 }
 
-func loadOrClone(repoURL string, directory string, remoteName string, skipFetch bool) (*git.Repository, error) {
+// LoadOrClone clones a repo in a given directory. Or loads a repo if no repoUrl is provided
+func LoadOrClone(repoURL string, directory string, remoteName string, skipFetch bool) (*git.Repository, error) {
 	var repo *git.Repository
 	var err error
 
@@ -77,7 +78,7 @@ func baseReference(repo *git.Repository, directory string, baseBranch string) (*
 	return baseRef, nil
 }
 
-func compareBranch(repo *git.Repository, baseBranch string, branch string, directory string) ([]*object.Commit, []*object.Commit, error) {
+func CompareBranch(repo *git.Repository, baseBranch string, branch string, directory string) ([]*object.Commit, []*object.Commit, error) {
 	var behind []*object.Commit
 	var ahead []*object.Commit
 
@@ -134,4 +135,32 @@ func mergeBase(branch1 string, branch2 string, directory string) (string, error)
 	}
 
 	return strings.TrimSpace(string(out)), nil
+}
+
+// FormatMessage formats the commit's message
+func FormatMessage(c *object.Commit, firstLinePrefix string, nextLinesPrefix string, lineSeparator string) string {
+	outputStrings := []string{}
+	maxLines := 6
+
+	lines := strings.Split(c.Message, "\n")
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		prefix := ""
+
+		if len(outputStrings) == 0 {
+			prefix = firstLinePrefix
+		} else {
+			prefix = nextLinesPrefix
+		}
+
+		outputStrings = append(outputStrings, fmt.Sprintf("%s%s", prefix, strings.TrimSpace(line)))
+
+		if len(outputStrings) >= maxLines {
+			break
+		}
+	}
+	return strings.Join(outputStrings, lineSeparator)
 }

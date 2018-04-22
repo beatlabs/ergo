@@ -78,6 +78,7 @@ func baseReference(repo *git.Repository, directory string, baseBranch string) (*
 	return baseRef, nil
 }
 
+// CompareBranch lists the commits ahead and behind of a targetBranch compared to a baseBranch
 func CompareBranch(repo *git.Repository, baseBranch string, branch string, directory string) ([]*object.Commit, []*object.Commit, error) {
 	var behind []*object.Commit
 	var ahead []*object.Commit

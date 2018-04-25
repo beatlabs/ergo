@@ -39,6 +39,8 @@ func main() {
 	var releaseOffset string
 	var releaseTag string
 
+	var releaseBranchesString string
+
 	//command flags
 	var statusCmd bool
 	var pendingCmd bool
@@ -89,21 +91,9 @@ func main() {
 		fmt.Println("Proceeding without configuration file")
 	}
 
-	if baseBranch == "" {
-		baseBranch = viper.GetString("generic.base-branch")
-	}
-	if branchesString == "" {
-		branchesString = viper.GetString("generic.status-branches")
-	}
-
 	repository, err := repo.LoadOrClone(repoURL, directory, viper.GetString("generic.remote"), skipFetch)
 	if err != nil {
 		fmt.Printf("Error loading repo:%s\n", err)
-		return
-	}
-
-	if branchesString == "" {
-		fmt.Printf("no branches to compare, use -branches\n")
 		return
 	}
 
@@ -116,13 +106,42 @@ func main() {
 
 	parts := strings.Split(rmt.Config().URLs[0], "/")
 	repoName := strings.TrimSuffix(parts[len(parts)-1], ".git")
+	organizationName := parts[len(parts)-2]
+	// if remote is set by ssh instead of https
+	if strings.Contains(organizationName, ":") {
+		organizationName = organizationName[strings.LastIndex(organizationName, ":")+1:]
+	}
 
 	repoForRelease := ""
 	if strings.Contains(viper.GetString("generic.release-repos"), repoName) {
 		repoForRelease = repoName
 	}
 
+	if baseBranch == "" {
+		baseBranch = viper.GetString("generic.base-branch")
+	}
+
+	if branchesString == "" {
+		branchesString = viper.GetString(fmt.Sprintf("repos.%s.status-branches", repoName))
+		releaseBranchesString = viper.GetString(fmt.Sprintf("repos.%s.release-branches", repoName))
+	}
+
+	if branchesString == "" {
+		branchesString = viper.GetString("generic.status-branches")
+	}
+
+	if releaseBranchesString == "" {
+		releaseBranchesString = viper.GetString("generic.release-branches")
+	}
+
+	if branchesString == "" {
+		fmt.Printf("no branches to compare, use -branches\n")
+		return
+	}
+
 	branches := strings.Split(branchesString, ",")
+	releaseBranches := strings.Split(releaseBranchesString, ",")
+
 	for _, branch := range branches {
 		ahead, behind, err := repo.CompareBranch(repository, baseBranch, branch, directory)
 		if err != nil {
@@ -152,11 +171,11 @@ func main() {
 	if deployCmd {
 		branchMap := viper.GetStringMapString("release.branch-map")
 		deployBranches(
-			viper.GetString("generic.organization"),
+			organizationName,
 			viper.GetString("generic.remote"),
 			repoForRelease,
 			baseBranch,
-			branches,
+			releaseBranches,
 			releaseOffset,
 			releaseInterval,
 			directory,
@@ -187,7 +206,7 @@ func main() {
 		release, err := github.CreateDraftRelease(
 			context.Background(),
 			viper.GetString("github.access-token"),
-			viper.GetString("generic.organization"),
+			organizationName,
 			repoForRelease,
 			name, tagName, releaseBody)
 
@@ -202,8 +221,8 @@ func main() {
 		release, err := github.LastRelease(
 			context.Background(),
 			viper.GetString("github.access-token"),
-			viper.GetString("generic.organization"),
-			viper.GetString("generic.release-repo"),
+			organizationName,
+			repoForRelease,
 		)
 		if err != nil {
 			fmt.Println(err)

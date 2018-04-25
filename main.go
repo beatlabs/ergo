@@ -37,6 +37,7 @@ func main() {
 	var branchesString string
 	var releaseInterval string
 	var releaseOffset string
+	var releaseTag string
 
 	//command flags
 	var statusCmd bool
@@ -56,6 +57,7 @@ func main() {
 	flag.StringVar(&branchesString, "branches", "", "Comma separated list of branches")
 	flag.StringVar(&releaseInterval, "releaseInterval", "5m", "Duration to wait between releases. ('5m', '1h25m', '30s')")
 	flag.StringVar(&releaseOffset, "releaseOffset", "10m", "Duration to wait before the first release ('5m', '1h25m', '30s')")
+	flag.StringVar(&releaseTag, "releaseTag", "", "Tag for the release. If empty, curent date in YYYY.MM.DD will be used")
 
 	// command flags. TODO: move to commands
 	flag.BoolVar(&statusCmd, "status", false, "CMD: Display status of targetBranches compared to base branch")
@@ -94,7 +96,7 @@ func main() {
 		branchesString = viper.GetString("generic.status-branches")
 	}
 
-	repository, err := repo.LoadOrClone(repoURL, directory, "origin", skipFetch)
+	repository, err := repo.LoadOrClone(repoURL, directory, viper.GetString("generic.remote"), skipFetch)
 	if err != nil {
 		fmt.Printf("Error loading repo:%s\n", err)
 		return
@@ -103,6 +105,21 @@ func main() {
 	if branchesString == "" {
 		fmt.Printf("no branches to compare, use -branches\n")
 		return
+	}
+
+	rmt, err := repository.Remote(viper.GetString("generic.remote"))
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	parts := strings.Split(rmt.Config().URLs[0], "/")
+	repoName := strings.TrimSuffix(parts[len(parts)-1], ".git")
+
+	repoForRelease := ""
+	if strings.Contains(viper.GetString("generic.release-repos"), repoName) {
+		repoForRelease = repoName
 	}
 
 	branches := strings.Split(branchesString, ",")
@@ -135,6 +152,9 @@ func main() {
 	if deployCmd {
 		branchMap := viper.GetStringMapString("release.branch-map")
 		deployBranches(
+			viper.GetString("generic.organization"),
+			viper.GetString("generic.remote"),
+			repoForRelease,
 			baseBranch,
 			branches,
 			releaseOffset,
@@ -143,13 +163,23 @@ func main() {
 			branchMap,
 			viper.GetString("release.on-deploy.body-branch-suffix-find"),
 			viper.GetString("release.on-deploy.body-branch-suffix-replace"),
+			viper.GetString("github.access-token"),
 		)
 		return
 	}
 
 	if createReleaseCmd {
+		if repoForRelease == "" {
+			fmt.Printf("Repo is not configured for release support\nAdd '%s' to config generic.release-repos\n", repoName)
+			return
+		}
+
 		t := time.Now()
-		tagName := fmt.Sprintf("%4d.%02d.%02d", t.Year(), t.Month(), t.Day())
+
+		tagName := releaseTag
+		if tagName == "" {
+			tagName = fmt.Sprintf("%4d.%02d.%02d", t.Year(), t.Month(), t.Day())
+		}
 		name := fmt.Sprintf("%s %d %d", t.Month(), t.Day(), t.Year())
 
 		releaseBody := github.ReleaseBody(diff, viper.GetString("github.release-body-prefix"))
@@ -157,7 +187,8 @@ func main() {
 		release, err := github.CreateDraftRelease(
 			context.Background(),
 			viper.GetString("github.access-token"),
-			"taxibeat", "rest",
+			viper.GetString("generic.organization"),
+			repoForRelease,
 			name, tagName, releaseBody)
 
 		if err != nil {
@@ -171,7 +202,8 @@ func main() {
 		release, err := github.LastRelease(
 			context.Background(),
 			viper.GetString("github.access-token"),
-			"taxibeat", "rest",
+			viper.GetString("generic.organization"),
+			viper.GetString("generic.release-repo"),
 		)
 		if err != nil {
 			fmt.Println(err)
@@ -219,25 +251,32 @@ func printDetail(commitDiffBranches []repo.DiffCommitBranch) {
 	}
 }
 
-func deployBranches(baseBranch string, branches []string, releaseOffset string, releaseInterval string, directory string, branchMap map[string]string, suffixFind string, suffixReplace string) {
+func deployBranches(organization string, remote string, releaseRepo string, baseBranch string, branches []string, releaseOffset string, releaseInterval string, directory string, branchMap map[string]string, suffixFind string, suffixReplace string, githubAccessToken string) {
 	blue := color.New(color.FgCyan)
 	yellow := color.New(color.FgYellow)
 	green := color.New(color.FgGreen)
 
-	release, err := github.LastRelease(
-		context.Background(),
-		viper.GetString("github.access-token"),
-		"taxibeat", "rest",
-	)
-	if err != nil {
-		fmt.Println(err)
+	reference := baseBranch
+
+	integrateGithubRelease := releaseRepo != ""
+
+	if integrateGithubRelease {
+		release, err := github.LastRelease(
+			context.Background(),
+			githubAccessToken,
+			organization,
+			releaseRepo,
+		)
+		if err != nil {
+			fmt.Println(err)
+		}
+		reference = release.GetTagName()
+		green.Printf("Deploying %s\n", release.GetHTMLURL())
 	}
 
-	fmt.Println()
-	blue.Printf("Release tag: %s\n", *(release.TagName))
-
-	green.Printf("Deploying %s\n", release.GetHTMLURL())
+	blue.Printf("Release reference: %s\n", reference)
 	green.Println("Deployment start times are estimates.")
+
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
 
@@ -289,7 +328,13 @@ func deployBranches(baseBranch string, branches []string, releaseOffset string, 
 			t = t.Add(intervalDuration)
 		}
 		green.Printf("%s Deploying %s\n", time.Now().Format("15:04:05"), branch)
-		cmd := fmt.Sprintf("cd %s && git push origin origin/%s:%s", directory, baseBranch, branch)
+		cmd := ""
+		// if reference is a branch name, use origin
+		if reference == baseBranch {
+			cmd = fmt.Sprintf("cd %s && git push %s %s/%s:%s", directory, remote, remote, reference, branch)
+		} else { // if reference is a tag don't prefix with origin
+			cmd = fmt.Sprintf("cd %s && git push %s %s:%s", directory, remote, reference, branch)
+		}
 		green.Printf("%s Executing %s\n", time.Now().Format("15:04:05"), cmd)
 		out, err := exec.Command("sh", "-c", cmd).Output()
 
@@ -300,9 +345,19 @@ func deployBranches(baseBranch string, branches []string, releaseOffset string, 
 		green.Printf("%s Triggered Successfully %s\n", time.Now().Format("15:04:05"), strings.TrimSpace(string(out)))
 
 		branchText, ok := branchMap[branch]
-		if ok && suffixFind != "" {
+		if integrateGithubRelease && ok && suffixFind != "" {
 			t := time.Now()
 			green.Printf("%s Updating release on github %s\n", time.Now().Format("15:04:05"), strings.TrimSpace(string(out)))
+			release, err := github.LastRelease(
+				context.Background(),
+				githubAccessToken,
+				organization,
+				releaseRepo,
+			)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
 			findText := fmt.Sprintf("%s%s", branchText, suffixFind)
 			replaceText := fmt.Sprintf("%s-%d_%s_%d_%02d:%02d%s", branchText, t.Day(), t.Month(), t.Year(), t.Hour(), t.Minute(), suffixReplace)
 			newBody := strings.Replace(*(release.Body), findText, replaceText, -1)
@@ -310,17 +365,17 @@ func deployBranches(baseBranch string, branches []string, releaseOffset string, 
 			release.Body = &newBody
 			release, err = github.EditRelease(
 				context.Background(),
-				viper.GetString("github.access-token"),
-				"taxibeat",
-				"rest",
+				githubAccessToken,
+				organization,
+				releaseRepo,
 				release,
 			)
 			if err != nil {
 				fmt.Println(err)
+				return
 			}
 
 			green.Printf("%s Updated release on github %s\n", time.Now().Format("15:04:05"), strings.TrimSpace(string(out)))
-
 		}
 	}
 }

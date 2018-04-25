@@ -25,6 +25,22 @@ func CreateDraftRelease(ctx context.Context, accessToken string, organization st
 	return release, err
 }
 
+func LastRelease(ctx context.Context, accessToken string, organization string,
+	repo string) (*github.RepositoryRelease, error) {
+	client := githubClient(ctx, accessToken)
+	release, _, err := client.Repositories.GetLatestRelease(ctx, organization, repo)
+
+	return release, err
+}
+
+func EditRelease(ctx context.Context, accessToken string, organization string,
+	repo string, release *github.RepositoryRelease) (*github.RepositoryRelease, error) {
+	client := githubClient(ctx, accessToken)
+	release, _, err := client.Repositories.EditRelease(ctx, organization, repo, *(release.ID), release)
+
+	return release, err
+}
+
 func githubClient(ctx context.Context, accessToken string) *github.Client {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: accessToken},

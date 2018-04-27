@@ -16,11 +16,18 @@ import (
 var repoURL string
 var directory string
 var skipFetch bool
-var branchesString string
 var baseBranch string
+
+var branchesString string
+var releaseBranchesString string
+
+var branches []string
+var releaseBranches []string
 
 var organizationName string
 var repoName string
+
+var repoForRelease string
 
 var rootCmd = &cobra.Command{
 	Use:   "ergo",
@@ -86,10 +93,32 @@ func getRepo() (*git.Repository, error) {
 
 	parts := strings.Split(rmt.Config().URLs[0], "/")
 	repoName = strings.TrimSuffix(parts[len(parts)-1], ".git")
-	organizationName := parts[len(parts)-2]
+	organizationName = parts[len(parts)-2]
 	// if remote is set by ssh instead of https
 	if strings.Contains(organizationName, ":") {
 		organizationName = organizationName[strings.LastIndex(organizationName, ":")+1:]
+	}
+
+	releaseBranchesString = branchesString
+	if branchesString == "" {
+		branchesString = viper.GetString(fmt.Sprintf("repos.%s.status-branches", repoName))
+		releaseBranchesString = viper.GetString(fmt.Sprintf("repos.%s.release-branches", repoName))
+	}
+
+	if branchesString == "" {
+		branchesString = viper.GetString("generic.status-branches")
+	}
+
+	if releaseBranchesString == "" {
+		releaseBranchesString = viper.GetString("generic.release-branches")
+	}
+
+	branches = strings.Split(branchesString, ",")
+	releaseBranches = strings.Split(releaseBranchesString, ",")
+
+	fmt.Println(repoName)
+	if strings.Contains(viper.GetString("generic.release-repos"), repoName) {
+		repoForRelease = repoName
 	}
 
 	return repository, nil

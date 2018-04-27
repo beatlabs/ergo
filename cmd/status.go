@@ -2,17 +2,18 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/dbaltas/ergo/repo"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
+
+var detail bool
 
 func init() {
 	rootCmd.AddCommand(statusCmd)
+	rootCmd.PersistentFlags().BoolVar(&detail, "detail", false, "Print commits in detail")
 }
 
 var statusCmd = &cobra.Command{
@@ -21,9 +22,8 @@ var statusCmd = &cobra.Command{
 	Long:  `Prints the commits ahead and behind of status branches compared to a base branch`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var diff []repo.DiffCommitBranch
-		r, _ := getRepo()
 
-		branches := strings.Split(branchesString, ",")
+		r, _ := getRepo()
 		for _, branch := range branches {
 			ahead, behind, err := repo.CompareBranch(r, baseBranch, branch, directory)
 			if err != nil {
@@ -39,8 +39,10 @@ var statusCmd = &cobra.Command{
 			diff = append(diff, branchCommitDiff)
 		}
 
-		fmt.Println(viper.GetString("generic.base-branch"))
-		fmt.Println(r)
+		if detail {
+			printDetail(diff)
+			return
+		}
 		printBranchCompare(diff)
 	},
 }
@@ -63,4 +65,22 @@ func printBranchCompare(commitDiffBranches []repo.DiffCommitBranch) {
 	}
 
 	tbl.Print()
+}
+
+func printDetail(commitDiffBranches []repo.DiffCommitBranch) {
+	blue := color.New(color.FgCyan)
+	yellow := color.New(color.FgYellow)
+	fmt.Println()
+	blue.Print("BASE: ")
+	yellow.Println(commitDiffBranches[0].BaseBranch)
+
+	firstLinePrefix := "- [ ] "
+	nextLinePrefix := "     "
+	lineSeparator := "\r\n"
+
+	for _, diffBranch := range commitDiffBranches {
+		for _, commit := range diffBranch.Behind {
+			fmt.Printf("%s%s", repo.FormatMessage(commit, firstLinePrefix, nextLinePrefix, lineSeparator), lineSeparator)
+		}
+	}
 }

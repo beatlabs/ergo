@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/dbaltas/ergo/repo"
 	"github.com/google/go-github/github"
@@ -51,20 +52,35 @@ func githubClient(ctx context.Context, accessToken string) *github.Client {
 }
 
 //ReleaseBody output needed for github release body
-func ReleaseBody(commitDiffBranches []repo.DiffCommitBranch, releaseBodyPrefix string) string {
-	body := releaseBodyPrefix
+func ReleaseBody(commitDiffBranches []repo.DiffCommitBranch, releaseBodyPrefix string, branchMap map[string]string) string {
+	var formattedCommits []string
+	var formattedBranches []string
+	var header, body string
 
 	firstLinePrefix := "- [ ] "
 	nextLinePrefix := "     "
 	lineSeparator := "\r\n"
 
 	for _, diffBranch := range commitDiffBranches {
-		for _, commit := range diffBranch.Behind {
-			body = fmt.Sprintf("%s%s%s",
-				body,
-				repo.FormatMessage(commit, firstLinePrefix, nextLinePrefix, lineSeparator),
-				lineSeparator)
+		branchText, ok := branchMap[diffBranch.Branch]
+		if !ok {
+			branchText = branchMap[diffBranch.Branch]
 		}
+		formattedBranches = append(formattedBranches,
+			fmt.Sprintf("%s ![](https://img.shields.io/badge/released-No-red.svg)", branchText))
 	}
-	return body
+
+	for _, commit := range commitDiffBranches[0].Behind {
+		formattedCommits = append(formattedCommits, repo.FormatMessage(commit, firstLinePrefix, nextLinePrefix, lineSeparator))
+		body = fmt.Sprintf("%s%s%s",
+			body,
+			repo.FormatMessage(commit, firstLinePrefix, nextLinePrefix, lineSeparator),
+			lineSeparator)
+	}
+
+	header = strings.Join(formattedBranches, " ")
+	body = strings.Join(formattedCommits, lineSeparator)
+	parts := []string{header, releaseBodyPrefix, body}
+
+	return strings.Join(parts, strings.Repeat(lineSeparator, 2))
 }

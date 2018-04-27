@@ -1,15 +1,19 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/dbaltas/ergo/github"
 	"github.com/dbaltas/ergo/repo"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	git "gopkg.in/src-d/go-git.v4"
 )
 
 var releaseTag string
@@ -24,11 +28,14 @@ var draftCmd = &cobra.Command{
 	Short: "Create a draft release on github comparing one target branch with the base branch",
 	Long:  `Create a draft release on github comparing one target branch with the base branch`,
 	Run: func(cmd *cobra.Command, args []string) {
-		draftRelease()
+		r, _ := getRepo()
+		draftRelease(r)
 	},
 }
 
-func draftRelease() {
+func draftRelease(r *git.Repository) {
+	yellow := color.New(color.FgYellow)
+	branchMap := viper.GetStringMapString("release.branch-map")
 	repoForRelease := ""
 	if strings.Contains(viper.GetString("generic.release-repos"), repoName) {
 		repoForRelease = repoName
@@ -47,9 +54,8 @@ func draftRelease() {
 	name := fmt.Sprintf("%s %d %d", t.Month(), t.Day(), t.Year())
 
 	var diff []repo.DiffCommitBranch
-	r, _ := getRepo()
 
-	branches := strings.Split(branchesString, ",")
+	branches := strings.Split(releaseBranchesString, ",")
 	for _, branch := range branches {
 		ahead, behind, err := repo.CompareBranch(r, baseBranch, branch, directory)
 		if err != nil {
@@ -65,7 +71,17 @@ func draftRelease() {
 		diff = append(diff, branchCommitDiff)
 	}
 
-	releaseBody := github.ReleaseBody(diff, viper.GetString("github.release-body-prefix"))
+	releaseBody := github.ReleaseBody(diff, viper.GetString("github.release-body-prefix"), branchMap)
+
+	fmt.Println(releaseBody)
+	reader := bufio.NewReader(os.Stdin)
+	yellow.Printf("Press 'ok' to continue with Drafting the release:")
+	input, _ := reader.ReadString('\n')
+	text := strings.Split(input, "\n")[0]
+	if text != "ok" {
+		fmt.Printf("No draft\n")
+		return
+	}
 
 	release, err := github.CreateDraftRelease(
 		context.Background(),

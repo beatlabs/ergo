@@ -31,22 +31,8 @@ var deployCmd = &cobra.Command{
 	Long:  `Deploy base branch to target branches`,
 	Run: func(cmd *cobra.Command, args []string) {
 		branchMap := viper.GetStringMapString("release.branch-map")
-		repoForRelease := ""
-		if strings.Contains(viper.GetString("generic.release-repos"), repoName) {
-			repoForRelease = repoName
-		}
-		if branchesString == "" {
-			branchesString = viper.GetString("generic.status-branches")
-		}
-		releaseBranchesString := ""
-		if branchesString == "" {
-			releaseBranchesString = viper.GetString(fmt.Sprintf("repos.%s.release-branches", repoName))
-		}
 
-		if releaseBranchesString == "" {
-			releaseBranchesString = viper.GetString("generic.release-branches")
-		}
-		releaseBranches := strings.Split(releaseBranchesString, ",")
+		getRepo()
 
 		deployBranches(
 			organizationName,
@@ -172,8 +158,9 @@ func deployBranches(organization string, remote string, releaseRepo string, base
 				fmt.Println(err)
 				return
 			}
-			findText := fmt.Sprintf("%s%s", branchText, suffixFind)
-			replaceText := fmt.Sprintf("%s-%d_%s_%d_%02d:%02d%s", branchText, t.Day(), t.Month(), t.Year(), t.Hour(), t.Minute(), suffixReplace)
+
+			findText := fmt.Sprintf("%s ![](https://img.shields.io/badge/released-No-red.svg)", branchText)
+			replaceText := fmt.Sprintf("%s ![](https://img.shields.io/badge/released-%d_%s_%d_%02d:%02d%s)", branchText, t.Day(), t.Month(), t.Year(), t.Hour(), t.Minute(), suffixReplace)
 			newBody := strings.Replace(*(release.Body), findText, replaceText, -1)
 			fmt.Println(newBody)
 			release.Body = &newBody

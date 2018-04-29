@@ -31,10 +31,14 @@ var repoForRelease string
 
 var rootCmd = &cobra.Command{
 	Use:   "ergo",
-	Short: "ergo is a tool that aims to help the daily workflow",
-	Long:  `ergo is a tool that aims to help the daily workflow`,
+	Short: "ergo is a tool that aims to help the daily developer workflow",
+	Long: `It aids to have a general view of multiple branches.
+On cases where deployment is done by pushing on a git branch:
+* it can draft a github release,
+* deploy on multiple branches and update the release notes with the time of release
+`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("hola")
+		fmt.Println("Hola! type `ergo help`")
 	},
 }
 

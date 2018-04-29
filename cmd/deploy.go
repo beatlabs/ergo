@@ -159,7 +159,7 @@ func deployBranches(organization string, remote string, releaseRepo string, base
 				return
 			}
 
-			findText := fmt.Sprintf("%s ![](https://img.shields.io/badge/released-No-red.svg)", branchText)
+			findText := fmt.Sprintf("%s ![](https://img.shields.io/badge/released%s)", branchText, suffixFind)
 			replaceText := fmt.Sprintf("%s ![](https://img.shields.io/badge/released-%d_%s_%d_%02d:%02d%s)", branchText, t.Day(), t.Month(), t.Year(), t.Hour(), t.Minute(), suffixReplace)
 			newBody := strings.Replace(*(release.Body), findText, replaceText, -1)
 			fmt.Println(newBody)

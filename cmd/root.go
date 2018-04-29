@@ -32,7 +32,7 @@ var repoForRelease string
 var rootCmd = &cobra.Command{
 	Use:   "ergo",
 	Short: "ergo is a tool that aims to help the daily developer workflow",
-	Long: `It aids to have a general view of multiple branches.
+	Long: `Ergo aids to compare multiple branches.
 On cases where deployment is done by pushing on a git branch:
 * it can draft a github release,
 * deploy on multiple branches and update the release notes with the time of release

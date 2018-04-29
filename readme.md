@@ -18,7 +18,10 @@ $ ./ergo -directory path-to-repo -branches 'qabranch,productionbranch,mybranch,y
 
 # Usage
 ```
-ergo is a tool that aims to help the daily workflow
+Ergo aids to compare multiple branches.
+On cases where deployment is done by pushing on a git branch:
+* it can draft a github release,
+* deploy on multiple branches and update the release notes with the time of release
 
 Usage:
   ergo [flags]
@@ -50,4 +53,34 @@ For ssh access to repos make sure you have a running ssh-agent
 $ eval `ssh-agent`
 Agent pid 4586
 $ ssh-add 
+```
+
+# Config
+Configuration is read from $HOME/.ergo.yaml
+
+Sample config file
+```yaml
+generic:
+  remote: origin
+  release-repos: "ergo,periscope,ergo-functional-test-repo"
+  base-branch: "master"
+  status-branches: "develop,staging,master,release-es,release-gr"
+  release-branches: "release-es,release-gr"
+github:
+  access-token: "access-token-goes-here"
+  release-body-prefix: "### Added"
+release:
+  branch-map:
+    release-gr: ":greece:"
+    release-es: ":es:"
+    ft-release-gr: ":greece:"
+    ft-release-es: ":es:"
+    ft-release-it: ":it:"
+  on-deploy:
+    body-branch-suffix-find: "-No-red.svg"
+    body-branch-suffix-replace: "-green.svg"
+repos:
+  ergo-functional-test-repo:
+    status-branches: "master,ft-release-gr,ft-release-es,ft-release-it"
+    release-branches: "ft-release-es,ft-release-gr,ft-release-it"
 ```

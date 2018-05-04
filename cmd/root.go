@@ -13,21 +13,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-var repoURL string
-var directory string
-var skipFetch bool
-var baseBranch string
-
-var branchesString string
-var releaseBranchesString string
-
-var branches []string
-var releaseBranches []string
-
-var organizationName string
-var repoName string
-
-var repoForRelease string
+var (
+	repoURL               string
+	directory             string
+	skipFetch             bool
+	baseBranch            string
+	branchesString        string
+	releaseBranchesString string
+	branches              []string
+	releaseBranches       []string
+	organizationName      string
+	repoName              string
+	repoForRelease        string
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "ergo",

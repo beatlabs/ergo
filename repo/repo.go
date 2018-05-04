@@ -78,18 +78,19 @@ func baseReference(repo *git.Repository, directory string, baseBranch string) (*
 	return baseRef, nil
 }
 
-// CompareBranch lists the commits ahead and behind of a targetBranch compared to a baseBranch
-func CompareBranch(repo *git.Repository, baseBranch string, branch string, directory string) ([]*object.Commit, []*object.Commit, error) {
-	var behind []*object.Commit
-	var ahead []*object.Commit
-
+// CompareBranch lists the commits ahead and behind of a targetBranch compared
+// to a baseBranch.
+func CompareBranch(repo *git.Repository, baseBranch, branch, directory string) ([]*object.Commit, []*object.Commit, error) {
 	commonAncestor, err := mergeBase(baseBranch, branch, directory)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "executing merge-base")
+	}
 
-	ahead, err = commitsAhead(repo, branch, commonAncestor)
+	ahead, err := commitsAhead(repo, branch, commonAncestor)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "comparing branches")
 	}
-	behind, err = commitsAhead(repo, baseBranch, commonAncestor)
+	behind, err := commitsAhead(repo, baseBranch, commonAncestor)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "comparing branches")
 	}
@@ -98,9 +99,7 @@ func CompareBranch(repo *git.Repository, baseBranch string, branch string, direc
 }
 
 func commitsAhead(repo *git.Repository, branch string, commonAncestor string) ([]*object.Commit, error) {
-	var ahead []*object.Commit
-	var reference string
-	reference = fmt.Sprintf("refs/remotes/origin/%s", branch)
+	reference := fmt.Sprintf("refs/remotes/origin/%s", branch)
 	ref, err := repo.Reference(plumbing.ReferenceName(reference), true)
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprintf("loading reference %s", reference))
@@ -112,6 +111,7 @@ func commitsAhead(repo *git.Repository, branch string, commonAncestor string) ([
 	}
 	defer cIter.Close()
 
+	var ahead []*object.Commit
 	for {
 		commit, err := cIter.Next()
 		if err != nil {

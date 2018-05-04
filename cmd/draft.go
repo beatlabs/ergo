@@ -36,11 +36,11 @@ var draftCmd = &cobra.Command{
 func draftRelease(r *git.Repository) {
 	yellow := color.New(color.FgYellow)
 	branchMap := viper.GetStringMapString("release.branch-map")
-	repoForRelease := ""
+	releaseRepo := ""
 	if strings.Contains(viper.GetString("generic.release-repos"), repoName) {
-		repoForRelease = repoName
+		releaseRepo = repoName
 	}
-	if repoForRelease == "" {
+	if releaseRepo == "" {
 		fmt.Printf("Repo is not configured for release support\nAdd '%s' to config generic.release-repos\n", repoName)
 		return
 	}
@@ -87,12 +87,11 @@ func draftRelease(r *git.Repository) {
 		context.Background(),
 		viper.GetString("github.access-token"),
 		organizationName,
-		repoForRelease,
+		releaseRepo,
 		name, tagName, releaseBody)
 
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println(release)
-	return
 }

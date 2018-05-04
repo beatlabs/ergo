@@ -10,7 +10,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-//CreateDraftRelease creates a draft release
+// CreateDraftRelease creates a draft release.
 func CreateDraftRelease(ctx context.Context, accessToken string, organization string,
 	repo string, name string, tagName string, releaseBody string) (*github.RepositoryRelease, error) {
 	isDraft := true
@@ -26,6 +26,7 @@ func CreateDraftRelease(ctx context.Context, accessToken string, organization st
 	return release, err
 }
 
+// LastRelease fetches the latest release for a repository.
 func LastRelease(ctx context.Context, accessToken string, organization string,
 	repo string) (*github.RepositoryRelease, error) {
 	client := githubClient(ctx, accessToken)
@@ -34,6 +35,7 @@ func LastRelease(ctx context.Context, accessToken string, organization string,
 	return release, err
 }
 
+// EditRelease allows to edit a repository release.
 func EditRelease(ctx context.Context, accessToken string, organization string,
 	repo string, release *github.RepositoryRelease) (*github.RepositoryRelease, error) {
 	client := githubClient(ctx, accessToken)
@@ -51,7 +53,7 @@ func githubClient(ctx context.Context, accessToken string) *github.Client {
 	return github.NewClient(tc)
 }
 
-//ReleaseBody output needed for github release body
+// ReleaseBody output needed for github release body.
 func ReleaseBody(commitDiffBranches []repo.DiffCommitBranch, releaseBodyPrefix string, branchMap map[string]string) string {
 	var formattedCommits []string
 	var formattedBranches []string

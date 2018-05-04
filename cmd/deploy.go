@@ -118,7 +118,7 @@ func deployBranches(organization string, remote string, releaseRepo string, base
 		return
 	}
 
-	d := firstRelease.Sub(time.Now())
+	d := time.Until(firstRelease)
 	green.Printf("Deployment will start in %s\n", d.String())
 	time.Sleep(d)
 

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -13,7 +12,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	git "gopkg.in/src-d/go-git.v4"
 )
 
 var releaseTag string
@@ -28,12 +26,11 @@ var draftCmd = &cobra.Command{
 	Short: "Create a draft release on github comparing one target branch with the base branch",
 	Long:  `Create a draft release on github comparing one target branch with the base branch`,
 	Run: func(cmd *cobra.Command, args []string) {
-		r, _ := getRepo()
-		draftRelease(r)
+		draftRelease()
 	},
 }
 
-func draftRelease(r *git.Repository) {
+func draftRelease() {
 	yellow := color.New(color.FgYellow)
 	branchMap := viper.GetStringMapString("release.branch-map")
 	releaseRepo := ""
@@ -57,7 +54,7 @@ func draftRelease(r *git.Repository) {
 
 	branches := strings.Split(releaseBranchesString, ",")
 	for _, branch := range branches {
-		ahead, behind, err := repo.CompareBranch(r, baseBranch, branch, directory)
+		ahead, behind, err := gitRepo.CompareBranch(baseBranch, branch)
 		if err != nil {
 			fmt.Printf("error comparing %s %s:%s\n", baseBranch, branch, err)
 			return
@@ -83,7 +80,6 @@ func draftRelease(r *git.Repository) {
 		return
 	}
 
-	gc := github.NewClient(context.Background(), viper.GetString("github.access-token"), organizationName, releaseRepo)
 	release, err := gc.CreateDraftRelease(name, tagName, releaseBody)
 
 	if err != nil {

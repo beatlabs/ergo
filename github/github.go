@@ -20,7 +20,11 @@ type Client struct {
 }
 
 // NewClient instantiate a Client
-func NewClient(ctx context.Context, accessToken, organization, repo string) *Client {
+func NewClient(ctx context.Context, accessToken, organization, repo string) (*Client, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("github.access_token not defined in config")
+	}
+
 	client := githubClient(ctx, accessToken)
 	return &Client{
 		ctx:          ctx,
@@ -28,7 +32,7 @@ func NewClient(ctx context.Context, accessToken, organization, repo string) *Cli
 		organization: organization,
 		repo:         repo,
 		client:       client,
-	}
+	}, nil
 }
 
 // CreateDraftRelease creates a draft release.

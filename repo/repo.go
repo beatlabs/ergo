@@ -12,6 +12,15 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
+// Repo describes a git repository
+type Repo struct {
+	repoURL    string
+	directory  string
+	remoteName string
+
+	Repo *git.Repository
+}
+
 // DiffCommitBranch commits ahead and commits behind for a given branch and base branch
 type DiffCommitBranch struct {
 	Branch     string
@@ -20,18 +29,27 @@ type DiffCommitBranch struct {
 	Behind     []*object.Commit
 }
 
+// New instantiates a Repo
+func New(repoURL, directory, remoteName string) *Repo {
+	return &Repo{
+		repoURL:    repoURL,
+		directory:  directory,
+		remoteName: remoteName,
+	}
+}
+
 // LoadOrClone clones a repo in a given directory. Or loads a repo if no repoUrl is provided
-func LoadOrClone(repoURL string, directory string, remoteName string, skipFetch bool) (*git.Repository, error) {
+func (r *Repo) LoadOrClone(skipFetch bool) (*git.Repository, error) {
 	var repo *git.Repository
 	var err error
 
-	if directory == "" {
+	if r.directory == "" {
 		return nil, fmt.Errorf("no directory provided")
 	}
 
-	if repoURL != "" {
-		repo, err = git.PlainClone(directory, false, &git.CloneOptions{
-			URL:               repoURL,
+	if r.repoURL != "" {
+		repo, err = git.PlainClone(r.directory, false, &git.CloneOptions{
+			URL:               r.repoURL,
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})
 
@@ -41,56 +59,47 @@ func LoadOrClone(repoURL string, directory string, remoteName string, skipFetch 
 	}
 
 	if repo == nil {
-		repo, err = git.PlainOpen(directory)
+		repo, err = git.PlainOpen(r.directory)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	remote, err := repo.Remote(remoteName)
+	remote, err := repo.Remote(r.remoteName)
 	if err != nil {
-		fmt.Printf("error loading remote %s:%s", remoteName, err)
+		fmt.Printf("error loading remote %s:%s", r.remoteName, err)
 		return repo, err
 	}
 
 	if !skipFetch {
-		fmt.Printf("Fetching remote %s (use --skipFetch to skip)\n", remoteName)
+		fmt.Printf("Fetching remote %s (use --skipFetch to skip)\n", r.remoteName)
 		err = remote.Fetch(&git.FetchOptions{})
 		if err != nil {
 			if !strings.Contains(err.Error(), "already up-to-date") {
-				return repo, fmt.Errorf("unable to fetch remote %s: %s", remoteName, err)
+				return repo, fmt.Errorf("unable to fetch remote %s: %s", r.remoteName, err)
 			}
+			// simply a notice, not an error
 			fmt.Println(err)
 		}
 	}
+	r.Repo = repo
 
 	return repo, nil
 }
 
-func baseReference(repo *git.Repository, directory string, baseBranch string) (*plumbing.Reference, error) {
-	baseRefText := fmt.Sprintf("refs/remotes/origin/%s", baseBranch)
-	baseRef, err := repo.Reference(plumbing.ReferenceName(baseRefText), true)
-
-	if err != nil {
-		return nil, fmt.Errorf("could not load ref %s:%s", baseRefText, err)
-	}
-
-	return baseRef, nil
-}
-
 // CompareBranch lists the commits ahead and behind of a targetBranch compared
 // to a baseBranch.
-func CompareBranch(repo *git.Repository, baseBranch, branch, directory string) ([]*object.Commit, []*object.Commit, error) {
-	commonAncestor, err := mergeBase(baseBranch, branch, directory)
+func (r *Repo) CompareBranch(baseBranch, branch string) ([]*object.Commit, []*object.Commit, error) {
+	commonAncestor, err := mergeBase(baseBranch, branch, r.directory)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "executing merge-base")
 	}
 
-	ahead, err := commitsAhead(repo, branch, commonAncestor)
+	ahead, err := commitsAhead(r.Repo, branch, commonAncestor)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "comparing branches")
 	}
-	behind, err := commitsAhead(repo, baseBranch, commonAncestor)
+	behind, err := commitsAhead(r.Repo, baseBranch, commonAncestor)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "comparing branches")
 	}

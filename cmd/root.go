@@ -1,13 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
 
+	"github.com/dbaltas/ergo/github"
 	"github.com/dbaltas/ergo/repo"
 	homedir "github.com/mitchellh/go-homedir"
-	git "gopkg.in/src-d/go-git.v4"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -24,7 +25,10 @@ var (
 	releaseBranches       []string
 	organizationName      string
 	repoName              string
-	repoForRelease        string
+	releaseRepo           string
+
+	gc      *github.Client
+	gitRepo *repo.Repo
 )
 
 var rootCmd = &cobra.Command{
@@ -37,6 +41,20 @@ On cases where deployment is done by pushing on a git branch:
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Hola! type `ergo help`")
+	},
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		var err error
+
+		gitRepo, err = initializeRepo()
+		if err != nil {
+			fmt.Printf("get repo: %v\n", err)
+			os.Exit(1)
+		}
+
+		gc, err = github.NewClient(context.Background(), viper.GetString("github.access-token"), organizationName, releaseRepo)
+		if err != nil {
+			fmt.Printf("%v\n", err)
+		}
 	},
 }
 
@@ -69,8 +87,9 @@ func initConfig() {
 	}
 }
 
-func getRepo() (*git.Repository, error) {
-	repository, err := repo.LoadOrClone(repoURL, directory, "origin", skipFetch)
+func initializeRepo() (*repo.Repo, error) {
+	r := repo.New(repoURL, directory, viper.GetString("generic.remote"))
+	repository, err := r.LoadOrClone(skipFetch)
 	if err != nil {
 		fmt.Printf("Error loading repo:%s\n", err)
 		return nil, err
@@ -110,10 +129,10 @@ func getRepo() (*git.Repository, error) {
 
 	fmt.Println(repoName)
 	if strings.Contains(viper.GetString("generic.release-repos"), repoName) {
-		repoForRelease = repoName
+		releaseRepo = repoName
 	}
 
-	return repository, nil
+	return r, nil
 }
 
 // Execute entry point for commands

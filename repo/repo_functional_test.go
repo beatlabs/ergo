@@ -17,6 +17,7 @@ func TestRepo(t *testing.T) {
 	var err error
 	var ahead, behind []*object.Commit
 
+	r := New(repoURL, directory, "origin")
 	// cleanup after test run
 	defer func() {
 		os.RemoveAll(directory)
@@ -28,7 +29,7 @@ func TestRepo(t *testing.T) {
 	}()
 
 	t.Run("Clone", func(t *testing.T) {
-		repoFromClone, err = LoadOrClone(repoURL, directory, "origin", skipFetch)
+		repoFromClone, err = r.LoadOrClone(skipFetch)
 		if err != nil || repoFromClone == nil {
 			t.Errorf("Error cloning repo:%v\n", err)
 			return
@@ -36,7 +37,7 @@ func TestRepo(t *testing.T) {
 	})
 
 	t.Run("Clone already cloned", func(t *testing.T) {
-		repoFromSecondClone, err = LoadOrClone(repoURL, directory, "origin", skipFetch)
+		repoFromSecondClone, err = r.LoadOrClone(skipFetch)
 		if repoFromSecondClone != nil {
 			t.Errorf("Expected 'repository already exists' error")
 			return
@@ -44,7 +45,8 @@ func TestRepo(t *testing.T) {
 	})
 
 	t.Run("Load from disk already cloned", func(t *testing.T) {
-		repoFromPath, err = LoadOrClone("", directory, "origin", skipFetch)
+		r2 := New("", directory, "origin")
+		repoFromPath, err = r2.LoadOrClone(skipFetch)
 		if err != nil || repoFromPath == nil {
 			t.Errorf("error loading repo from path: %v", err)
 			return
@@ -54,7 +56,7 @@ func TestRepo(t *testing.T) {
 	t.Run("Compare Branch", func(t *testing.T) {
 		targetBranch := "ft-master"
 		baseBranch := "ft-develop"
-		ahead, behind, err = CompareBranch(repoFromPath, baseBranch, targetBranch, directory)
+		ahead, behind, err = r.CompareBranch(baseBranch, targetBranch)
 		if err != nil {
 			t.Errorf("error comparing branches %s %s: %v", baseBranch, targetBranch, err)
 			return

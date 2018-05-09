@@ -2,14 +2,12 @@ package cmd
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 
-	"github.com/dbaltas/ergo/github"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
 	"github.com/spf13/cobra"
@@ -32,12 +30,9 @@ var deployCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		branchMap := viper.GetStringMapString("release.branch-map")
 
-		getRepo()
-
 		deployBranches(
-			organizationName,
 			viper.GetString("generic.remote"),
-			repoForRelease,
+			releaseRepo,
 			baseBranch,
 			releaseBranches,
 			releaseOffset,
@@ -46,14 +41,11 @@ var deployCmd = &cobra.Command{
 			branchMap,
 			viper.GetString("release.on-deploy.body-branch-suffix-find"),
 			viper.GetString("release.on-deploy.body-branch-suffix-replace"),
-			viper.GetString("github.access-token"),
 		)
 	},
 }
 
-func deployBranches(organization string, remote string, releaseRepo string, baseBranch string, branches []string, releaseOffset string, releaseInterval string, directory string, branchMap map[string]string, suffixFind string, suffixReplace string, githubAccessToken string) {
-	var gc *github.Client
-
+func deployBranches(remote, releaseRepo, baseBranch string, branches []string, releaseOffset, releaseInterval, directory string, branchMap map[string]string, suffixFind, suffixReplace string) {
 	blue := color.New(color.FgCyan)
 	yellow := color.New(color.FgYellow)
 	green := color.New(color.FgGreen)
@@ -63,7 +55,6 @@ func deployBranches(organization string, remote string, releaseRepo string, base
 	integrateGithubRelease := releaseRepo != ""
 
 	if integrateGithubRelease {
-		gc = github.NewClient(context.Background(), viper.GetString("github.access-token"), organizationName, releaseRepo)
 		release, err := gc.LastRelease()
 		if err != nil {
 			fmt.Println(err)

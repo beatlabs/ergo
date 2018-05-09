@@ -15,6 +15,6 @@ var versionCmd = &cobra.Command{
 	Short: "Print the version of ergo",
 	Long:  `Print the version of ergo`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("0.2.0")
+		fmt.Println("0.2.1")
 	},
 }

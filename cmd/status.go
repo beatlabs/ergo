@@ -13,7 +13,7 @@ var detail bool
 
 func init() {
 	rootCmd.AddCommand(statusCmd)
-	rootCmd.PersistentFlags().BoolVar(&detail, "detail", false, "Print commits in detail")
+	rootCmd.Flags().BoolVar(&detail, "detail", false, "Print commits in detail")
 }
 
 var statusCmd = &cobra.Command{

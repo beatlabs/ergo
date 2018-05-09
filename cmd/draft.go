@@ -20,7 +20,7 @@ var releaseTag string
 
 func init() {
 	rootCmd.AddCommand(draftCmd)
-	draftCmd.PersistentFlags().StringVar(&releaseTag, "releaseTag", "", "Tag for the release. If empty, curent date in YYYY.MM.DD will be used")
+	draftCmd.Flags().StringVar(&releaseTag, "releaseTag", "", "Tag for the release. If empty, curent date in YYYY.MM.DD will be used")
 }
 
 var draftCmd = &cobra.Command{
@@ -83,12 +83,8 @@ func draftRelease(r *git.Repository) {
 		return
 	}
 
-	release, err := github.CreateDraftRelease(
-		context.Background(),
-		viper.GetString("github.access-token"),
-		organizationName,
-		releaseRepo,
-		name, tagName, releaseBody)
+	gc := github.NewClient(context.Background(), viper.GetString("github.access-token"), organizationName, releaseRepo)
+	release, err := gc.CreateDraftRelease(name, tagName, releaseBody)
 
 	if err != nil {
 		fmt.Println(err)

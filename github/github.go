@@ -10,9 +10,29 @@ import (
 	"golang.org/x/oauth2"
 )
 
+// Client for github API
+type Client struct {
+	ctx          context.Context
+	accessToken  string
+	organization string
+	repo         string
+	client       *github.Client
+}
+
+// NewClient instantiate a Client
+func NewClient(ctx context.Context, accessToken, organization, repo string) *Client {
+	client := githubClient(ctx, accessToken)
+	return &Client{
+		ctx:          ctx,
+		accessToken:  accessToken,
+		organization: organization,
+		repo:         repo,
+		client:       client,
+	}
+}
+
 // CreateDraftRelease creates a draft release.
-func CreateDraftRelease(ctx context.Context, accessToken string, organization string,
-	repo string, name string, tagName string, releaseBody string) (*github.RepositoryRelease, error) {
+func (gc *Client) CreateDraftRelease(name, tagName, releaseBody string) (*github.RepositoryRelease, error) {
 	isDraft := true
 	release := &github.RepositoryRelease{
 		Name:    &name,
@@ -20,37 +40,31 @@ func CreateDraftRelease(ctx context.Context, accessToken string, organization st
 		Draft:   &isDraft,
 		Body:    &releaseBody,
 	}
-	client := githubClient(ctx, accessToken)
-	release, _, err := client.Repositories.CreateRelease(ctx, organization, repo, release)
+
+	release, _, err := gc.client.Repositories.CreateRelease(
+		gc.ctx,
+		gc.organization,
+		gc.repo,
+		release,
+	)
 
 	return release, err
 }
 
 // LastRelease fetches the latest release for a repository.
-func LastRelease(ctx context.Context, accessToken string, organization string,
-	repo string) (*github.RepositoryRelease, error) {
-	client := githubClient(ctx, accessToken)
-	release, _, err := client.Repositories.GetLatestRelease(ctx, organization, repo)
+func (gc *Client) LastRelease() (*github.RepositoryRelease, error) {
+	release, _, err := gc.client.Repositories.GetLatestRelease(
+		gc.ctx, gc.organization, gc.repo)
 
 	return release, err
 }
 
 // EditRelease allows to edit a repository release.
-func EditRelease(ctx context.Context, accessToken string, organization string,
-	repo string, release *github.RepositoryRelease) (*github.RepositoryRelease, error) {
-	client := githubClient(ctx, accessToken)
-	release, _, err := client.Repositories.EditRelease(ctx, organization, repo, *(release.ID), release)
+func (gc *Client) EditRelease(release *github.RepositoryRelease) (*github.RepositoryRelease, error) {
+	release, _, err := gc.client.Repositories.EditRelease(
+		gc.ctx, gc.organization, gc.repo, *(release.ID), release)
 
 	return release, err
-}
-
-func githubClient(ctx context.Context, accessToken string) *github.Client {
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: accessToken},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-
-	return github.NewClient(tc)
 }
 
 // ReleaseBody output needed for github release body.
@@ -85,4 +99,13 @@ func ReleaseBody(commitDiffBranches []repo.DiffCommitBranch, releaseBodyPrefix s
 	parts := []string{header, releaseBodyPrefix, body}
 
 	return strings.Join(parts, strings.Repeat(lineSeparator, 2))
+}
+
+func githubClient(ctx context.Context, accessToken string) *github.Client {
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: accessToken},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+
+	return github.NewClient(tc)
 }

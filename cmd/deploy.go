@@ -21,8 +21,8 @@ var releaseOffset string
 
 func init() {
 	rootCmd.AddCommand(deployCmd)
-	deployCmd.PersistentFlags().StringVar(&releaseOffset, "releaseOffset", "1m", "Duration to wait before the first release ('5m', '1h25m', '30s')")
-	deployCmd.PersistentFlags().StringVar(&releaseInterval, "releaseInterval", "25m", "Duration to wait between releases. ('5m', '1h25m', '30s')")
+	deployCmd.Flags().StringVar(&releaseOffset, "releaseOffset", "1m", "Duration to wait before the first release ('5m', '1h25m', '30s')")
+	deployCmd.Flags().StringVar(&releaseInterval, "releaseInterval", "25m", "Duration to wait between releases. ('5m', '1h25m', '30s')")
 }
 
 var deployCmd = &cobra.Command{
@@ -52,6 +52,8 @@ var deployCmd = &cobra.Command{
 }
 
 func deployBranches(organization string, remote string, releaseRepo string, baseBranch string, branches []string, releaseOffset string, releaseInterval string, directory string, branchMap map[string]string, suffixFind string, suffixReplace string, githubAccessToken string) {
+	var gc *github.Client
+
 	blue := color.New(color.FgCyan)
 	yellow := color.New(color.FgYellow)
 	green := color.New(color.FgGreen)
@@ -61,12 +63,8 @@ func deployBranches(organization string, remote string, releaseRepo string, base
 	integrateGithubRelease := releaseRepo != ""
 
 	if integrateGithubRelease {
-		release, err := github.LastRelease(
-			context.Background(),
-			githubAccessToken,
-			organization,
-			releaseRepo,
-		)
+		gc = github.NewClient(context.Background(), viper.GetString("github.access-token"), organizationName, releaseRepo)
+		release, err := gc.LastRelease()
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -148,12 +146,7 @@ func deployBranches(organization string, remote string, releaseRepo string, base
 		if integrateGithubRelease && ok && suffixFind != "" {
 			t := time.Now()
 			green.Printf("%s Updating release on github %s\n", time.Now().Format("15:04:05"), strings.TrimSpace(string(out)))
-			release, err := github.LastRelease(
-				context.Background(),
-				githubAccessToken,
-				organization,
-				releaseRepo,
-			)
+			release, err := gc.LastRelease()
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -164,13 +157,7 @@ func deployBranches(organization string, remote string, releaseRepo string, base
 			newBody := strings.Replace(*(release.Body), findText, replaceText, -1)
 			fmt.Println(newBody)
 			release.Body = &newBody
-			release, err = github.EditRelease(
-				context.Background(),
-				githubAccessToken,
-				organization,
-				releaseRepo,
-				release,
-			)
+			release, err = gc.EditRelease(release)
 			if err != nil {
 				fmt.Println(err)
 				return

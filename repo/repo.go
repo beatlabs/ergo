@@ -87,6 +87,18 @@ func (r *Repo) LoadOrClone(skipFetch bool) (*git.Repository, error) {
 	return repo, nil
 }
 
+// CurrentBranch returns the currently checked out branch
+func (r *Repo) CurrentBranch() (string, error) {
+	cmd := fmt.Sprintf("cd %s && git rev-parse --abbrev-ref HEAD", r.directory)
+	out, err := exec.Command("sh", "-c", cmd).Output()
+
+	if err != nil {
+		return "", errors.Wrap(err, "executing external command")
+	}
+
+	return strings.TrimSpace(string(out)), nil
+}
+
 // CompareBranch lists the commits ahead and behind of a targetBranch compared
 // to a baseBranch.
 func (r *Repo) CompareBranch(baseBranch, branch string) ([]*object.Commit, []*object.Commit, error) {

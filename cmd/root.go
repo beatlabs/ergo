@@ -8,6 +8,7 @@ import (
 
 	"github.com/dbaltas/ergo/github"
 	"github.com/dbaltas/ergo/repo"
+	"github.com/fatih/color"
 	homedir "github.com/mitchellh/go-homedir"
 
 	"github.com/spf13/cobra"
@@ -16,7 +17,7 @@ import (
 
 var (
 	repoURL               string
-	directory             string
+	path                  string
 	skipFetch             bool
 	baseBranch            string
 	branchesString        string
@@ -27,17 +28,20 @@ var (
 	repoName              string
 	releaseRepo           string
 
-	gc      *github.Client
-	gitRepo *repo.Repo
+	gc *github.Client
+	r  *repo.Repo
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "ergo",
 	Short: "ergo is a tool that aims to help the daily developer workflow",
-	Long: `Ergo aids to compare multiple branches.
-On cases where deployment is done by pushing on a git branch:
-* it can draft a github release,
-* deploy on multiple branches and update the release notes with the time of release
+	Long: `Ergo helps to
+* compare multiple branches
+* push to multiple branches with time interval (useful for multiple release environments)
+Also it minimizing the browser interaction with github
+* handles pull requests
+* drafts a release
+* updates release notes
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Hola! type `ergo help`")
@@ -45,15 +49,22 @@ On cases where deployment is done by pushing on a git branch:
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		var err error
 
-		gitRepo, err = initializeRepo()
+		noRepoCmds := make(map[string]bool)
+		noRepoCmds["help"] = true
+		noRepoCmds["version"] = true
+		if _, ok := noRepoCmds[cmd.Name()]; ok {
+			return
+		}
+
+		err = initializeRepo()
 		if err != nil {
-			fmt.Printf("get repo: %v\n", err)
+			fmt.Printf("Error Initializing repo: %v\n", err)
 			os.Exit(1)
 		}
 
 		gc, err = github.NewClient(context.Background(), viper.GetString("github.access-token"), organizationName, releaseRepo)
 		if err != nil {
-			fmt.Printf("%v\n", err)
+			fmt.Printf("Error Initializing github %v\n", err)
 		}
 	},
 }
@@ -61,11 +72,11 @@ On cases where deployment is done by pushing on a git branch:
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&repoURL, "repoUrl", "", "git repo Url. ssh and https supported")
-	rootCmd.PersistentFlags().StringVar(&directory, "directory", ".", "Location to store or retrieve from the repo")
+	rootCmd.PersistentFlags().StringVar(&path, "path", ".", "Location to store or retrieve from the repo")
 	rootCmd.PersistentFlags().BoolVar(&skipFetch, "skipFetch", false, "Skip fetch. When set you may not be up to date with remote")
 
 	rootCmd.PersistentFlags().StringVar(&branchesString, "branches", "", "Comma separated list of branches")
-	rootCmd.PersistentFlags().StringVar(&baseBranch, "baseBranch", "", "Base branch for the comparison.")
+	rootCmd.PersistentFlags().StringVar(&baseBranch, "base", "", "Base branch for the comparison.")
 }
 
 func initConfig() {
@@ -87,28 +98,28 @@ func initConfig() {
 	}
 }
 
-func initializeRepo() (*repo.Repo, error) {
-	r := repo.New(repoURL, directory, viper.GetString("generic.remote"))
-	repository, err := r.LoadOrClone(skipFetch)
+func initializeRepo() error {
+	var err error
+	if repoURL != "" {
+		r, err = repo.NewClone(repoURL, path, viper.GetString("generic.remote"))
+	} else {
+		r, err = repo.NewFromPath(path, viper.GetString("generic.remote"))
+	}
+
 	if err != nil {
 		fmt.Printf("Error loading repo:%s\n", err)
-		return nil, err
+		return err
 	}
 
-	rmt, err := repository.Remote(viper.GetString("generic.remote"))
-
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
+	if !skipFetch {
+		err = r.Fetch()
+		if err != nil {
+			return err
+		}
 	}
 
-	parts := strings.Split(rmt.Config().URLs[0], "/")
-	repoName = strings.TrimSuffix(parts[len(parts)-1], ".git")
-	organizationName = parts[len(parts)-2]
-	// if remote is set by ssh instead of https
-	if strings.Contains(organizationName, ":") {
-		organizationName = organizationName[strings.LastIndex(organizationName, ":")+1:]
-	}
+	repoName = r.Name()
+	organizationName = r.OrganizationName()
 
 	releaseBranchesString = branchesString
 	if branchesString == "" {
@@ -127,12 +138,14 @@ func initializeRepo() (*repo.Repo, error) {
 	branches = strings.Split(branchesString, ",")
 	releaseBranches = strings.Split(releaseBranchesString, ",")
 
-	fmt.Println(repoName)
 	if strings.Contains(viper.GetString("generic.release-repos"), repoName) {
 		releaseRepo = repoName
 	}
 
-	return r, nil
+	yellow := color.New(color.FgYellow)
+	yellow.Printf("%s/%s\n", organizationName, repoName)
+
+	return nil
 }
 
 // Execute entry point for commands

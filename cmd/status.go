@@ -24,7 +24,7 @@ var statusCmd = &cobra.Command{
 		var diff []repo.DiffCommitBranch
 
 		for _, branch := range branches {
-			ahead, behind, err := gitRepo.CompareBranch(baseBranch, branch)
+			ahead, behind, err := r.CompareBranch(baseBranch, branch)
 			if err != nil {
 				fmt.Printf("error comparing %s %s:%s\n", baseBranch, branch, err)
 				return

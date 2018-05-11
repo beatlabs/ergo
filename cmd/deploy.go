@@ -16,11 +16,13 @@ import (
 
 var releaseInterval string
 var releaseOffset string
+var forcePush bool
 
 func init() {
 	rootCmd.AddCommand(deployCmd)
 	deployCmd.Flags().StringVar(&releaseOffset, "releaseOffset", "1m", "Duration to wait before the first release ('5m', '1h25m', '30s')")
 	deployCmd.Flags().StringVar(&releaseInterval, "releaseInterval", "25m", "Duration to wait between releases. ('5m', '1h25m', '30s')")
+	deployCmd.Flags().BoolVar(&forcePush, "force", false, "Force push if deploy branch has diverged")
 }
 
 var deployCmd = &cobra.Command{
@@ -37,15 +39,16 @@ var deployCmd = &cobra.Command{
 			releaseBranches,
 			releaseOffset,
 			releaseInterval,
-			directory,
+			path,
 			branchMap,
 			viper.GetString("release.on-deploy.body-branch-suffix-find"),
 			viper.GetString("release.on-deploy.body-branch-suffix-replace"),
+			forcePush,
 		)
 	},
 }
 
-func deployBranches(remote, releaseRepo, baseBranch string, branches []string, releaseOffset, releaseInterval, directory string, branchMap map[string]string, suffixFind, suffixReplace string) {
+func deployBranches(remote, releaseRepo, baseBranch string, branches []string, releaseOffset, releaseInterval, path string, branchMap map[string]string, suffixFind, suffixReplace string, forcePush bool) {
 	blue := color.New(color.FgCyan)
 	yellow := color.New(color.FgYellow)
 	green := color.New(color.FgGreen)
@@ -119,10 +122,14 @@ func deployBranches(remote, releaseRepo, baseBranch string, branches []string, r
 		green.Printf("%s Deploying %s\n", time.Now().Format("15:04:05"), branch)
 		cmd := ""
 		// if reference is a branch name, use origin
+		pushFlag := ""
+		if forcePush {
+			pushFlag = "-f"
+		}
 		if reference == baseBranch {
-			cmd = fmt.Sprintf("cd %s && git push %s %s/%s:%s", directory, remote, remote, reference, branch)
+			cmd = fmt.Sprintf("cd %s && git push %s %s %s/%s:%s", path, pushFlag, remote, remote, reference, branch)
 		} else { // if reference is a tag don't prefix with origin
-			cmd = fmt.Sprintf("cd %s && git push %s %s:%s", directory, remote, reference, branch)
+			cmd = fmt.Sprintf("cd %s && git push %s %s %s:%s", path, pushFlag, remote, reference, branch)
 		}
 		green.Printf("%s Executing %s\n", time.Now().Format("15:04:05"), cmd)
 		out, err := exec.Command("sh", "-c", cmd).Output()
@@ -134,7 +141,10 @@ func deployBranches(remote, releaseRepo, baseBranch string, branches []string, r
 		green.Printf("%s Triggered Successfully %s\n", time.Now().Format("15:04:05"), strings.TrimSpace(string(out)))
 
 		branchText, ok := branchMap[branch]
-		if integrateGithubRelease && ok && suffixFind != "" {
+		if !ok {
+			branchText = branch
+		}
+		if integrateGithubRelease && suffixFind != "" {
 			t := time.Now()
 			green.Printf("%s Updating release on github %s\n", time.Now().Format("15:04:05"), strings.TrimSpace(string(out)))
 			release, err := gc.LastRelease()

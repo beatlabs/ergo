@@ -23,7 +23,7 @@ func init() {
 }
 
 var prCmd = &cobra.Command{
-	Use:   "pr",
+	Use:   "pr [new|list|{#number}]",
 	Short: "Create a pull request",
 	Long:  `Create a pull request from compare branch to base branch`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -36,7 +36,7 @@ func createPR() {
 	yellow := color.New(color.FgYellow)
 
 	if compareBranch == "" {
-		compareBranch, err = gitRepo.CurrentBranch()
+		compareBranch, err = r.CurrentBranch()
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -59,6 +59,7 @@ func createPR() {
 	}
 
 	pr, err := gc.CreatePR(baseBranch, compareBranch, title, description)
+
 	if err != nil {
 		fmt.Println(err)
 		return

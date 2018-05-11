@@ -16,13 +16,13 @@ import (
 
 var releaseInterval string
 var releaseOffset string
-var forcePush bool
+var allowForcePush bool
 
 func init() {
 	rootCmd.AddCommand(deployCmd)
 	deployCmd.Flags().StringVar(&releaseOffset, "releaseOffset", "1m", "Duration to wait before the first release ('5m', '1h25m', '30s')")
 	deployCmd.Flags().StringVar(&releaseInterval, "releaseInterval", "25m", "Duration to wait between releases. ('5m', '1h25m', '30s')")
-	deployCmd.Flags().BoolVar(&forcePush, "force", false, "Force push if deploy branch has diverged")
+	deployCmd.Flags().BoolVar(&allowForcePush, "force", false, "Allow force push if deploy branch has diverged from base")
 }
 
 var deployCmd = &cobra.Command{
@@ -30,31 +30,23 @@ var deployCmd = &cobra.Command{
 	Short: "Deploy base branch to target branches",
 	Long:  `Deploy base branch to target branches`,
 	Run: func(cmd *cobra.Command, args []string) {
-		branchMap := viper.GetStringMapString("release.branch-map")
-
 		deployBranches(
-			viper.GetString("generic.remote"),
-			releaseRepo,
-			baseBranch,
-			releaseBranches,
-			releaseOffset,
-			releaseInterval,
-			path,
-			branchMap,
+			viper.GetStringMapString("release.branch-map"),
 			viper.GetString("release.on-deploy.body-branch-suffix-find"),
 			viper.GetString("release.on-deploy.body-branch-suffix-replace"),
-			forcePush,
 		)
 	},
 }
 
-func deployBranches(remote, releaseRepo, baseBranch string, branches []string, releaseOffset, releaseInterval, path string, branchMap map[string]string, suffixFind, suffixReplace string, forcePush bool) {
+func deployBranches(branchMap map[string]string, suffixFind, suffixReplace string) {
 	blue := color.New(color.FgCyan)
 	yellow := color.New(color.FgYellow)
 	green := color.New(color.FgGreen)
 
 	reference := baseBranch
-
+	remote := r.GitRemote().Config().Name
+	releaseRepo := r.Name()
+	path := r.Path()
 	integrateGithubRelease := releaseRepo != ""
 
 	if integrateGithubRelease {
@@ -89,7 +81,7 @@ func deployBranches(remote, releaseRepo, baseBranch string, branches []string, r
 	t := time.Now()
 	t = t.Add(offsetDuration)
 	firstRelease := t
-	for _, branch := range branches {
+	for _, branch := range releaseBranches {
 		tbl.AddRow(branch, t.Format("15:04"))
 		t = t.Add(intervalDuration)
 	}
@@ -123,7 +115,7 @@ func deployBranches(remote, releaseRepo, baseBranch string, branches []string, r
 		cmd := ""
 		// if reference is a branch name, use origin
 		pushFlag := ""
-		if forcePush {
+		if allowForcePush {
 			pushFlag = "-f"
 		}
 		if reference == baseBranch {

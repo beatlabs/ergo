@@ -88,6 +88,24 @@ func (gc *Client) CreatePR(baseBranch, compareBranch, title, body string) (*gith
 	return pr, nil
 }
 
+// ListPRs creates a pull request
+func (gc *Client) ListPRs() ([]*github.PullRequest, error) {
+	opt := &github.PullRequestListOptions{
+		Sort:      "created",
+		Direction: "desc",
+	}
+
+	// pr, _, err := gc.client.PullRequests.Get(gc.ctx, gc.organization, gc.repo, 1)
+	// fmt.Print(pr)
+	pulls, _, err := gc.client.PullRequests.List(gc.ctx, gc.organization, gc.repo, opt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return pulls, nil
+}
+
 // ReleaseBody output needed for github release body.
 func ReleaseBody(commitDiffBranches []repo.DiffCommitBranch, releaseBodyPrefix string, branchMap map[string]string) string {
 	var formattedCommits []string

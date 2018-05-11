@@ -26,7 +26,6 @@ var (
 	releaseBranches       []string
 	organizationName      string
 	repoName              string
-	releaseRepo           string
 
 	gc *github.Client
 	r  *repo.Repo
@@ -52,6 +51,7 @@ Also it minimizing the browser interaction with github
 		noRepoCmds := make(map[string]bool)
 		noRepoCmds["help"] = true
 		noRepoCmds["version"] = true
+
 		if _, ok := noRepoCmds[cmd.Name()]; ok {
 			return
 		}
@@ -62,7 +62,7 @@ Also it minimizing the browser interaction with github
 			os.Exit(1)
 		}
 
-		gc, err = github.NewClient(context.Background(), viper.GetString("github.access-token"), organizationName, releaseRepo)
+		gc, err = github.NewClient(context.Background(), viper.GetString("github.access-token"), organizationName, repoName)
 		if err != nil {
 			fmt.Printf("Error Initializing github %v\n", err)
 		}
@@ -137,10 +137,6 @@ func initializeRepo() error {
 
 	branches = strings.Split(branchesString, ",")
 	releaseBranches = strings.Split(releaseBranchesString, ",")
-
-	if strings.Contains(viper.GetString("generic.release-repos"), repoName) {
-		releaseRepo = repoName
-	}
 
 	yellow := color.New(color.FgYellow)
 	yellow.Printf("%s/%s\n", organizationName, repoName)

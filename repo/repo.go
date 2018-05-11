@@ -141,3 +141,8 @@ func (r *Repo) Name() string {
 
 	return strings.TrimSuffix(parts[len(parts)-1], ".git")
 }
+
+// Path the path where the repo resides
+func (r *Repo) Path() string {
+	return r.path
+}

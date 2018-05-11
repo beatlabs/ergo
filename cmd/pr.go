@@ -16,16 +16,16 @@ var description string
 
 func init() {
 	rootCmd.AddCommand(prCmd)
-	prCmd.Flags().StringVar(&compareBranch, "compare", "", "The branch to compare with base branch.")
+	prCmd.Flags().StringVar(&compareBranch, "compare", "", "The branch to compare with base branch. Defaults to current local branch.")
 	prCmd.Flags().StringVar(&title, "title", "", "The title of the PR.")
 	prCmd.Flags().StringVar(&description, "description", "", "The description of the PR.")
 	prCmd.MarkFlagRequired("title")
 }
 
 var prCmd = &cobra.Command{
-	Use:   "pr [new|list|{#number}]",
-	Short: "Create a pull request",
-	Long:  `Create a pull request from compare branch to base branch`,
+	Use:   "pr",
+	Short: "Create a pull request [github]",
+	Long:  `Create a pull request on github from compare branch to base branch`,
 	Run: func(cmd *cobra.Command, args []string) {
 		createPR()
 	},

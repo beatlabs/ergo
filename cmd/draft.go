@@ -23,7 +23,7 @@ func init() {
 
 var draftCmd = &cobra.Command{
 	Use:   "draft",
-	Short: "Create a draft release on github comparing one target branch with the base branch",
+	Short: "Create a draft release [github]",
 	Long:  `Create a draft release on github comparing one target branch with the base branch`,
 	Run: func(cmd *cobra.Command, args []string) {
 		draftRelease()
@@ -33,14 +33,6 @@ var draftCmd = &cobra.Command{
 func draftRelease() {
 	yellow := color.New(color.FgYellow)
 	branchMap := viper.GetStringMapString("release.branch-map")
-	releaseRepo := ""
-	if strings.Contains(viper.GetString("generic.release-repos"), repoName) {
-		releaseRepo = repoName
-	}
-	if releaseRepo == "" {
-		fmt.Printf("Repo is not configured for release support\nAdd '%s' to config generic.release-repos\n", repoName)
-		return
-	}
 
 	t := time.Now()
 

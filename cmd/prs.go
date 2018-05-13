@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/fatih/color"
@@ -47,7 +46,7 @@ func listPRs() error {
 		}
 		t := *pr.CreatedAt
 
-		at := fmt.Sprintf("%d-%02d-%02d %02d:%02d", t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute())
+		at := t.Format("2006-01-02 15:04")
 		tbl.AddRow(*pr.Number, title, branch, *pr.HTMLURL, (*pr.User).GetLogin(), at)
 	}
 

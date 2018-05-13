@@ -29,8 +29,8 @@ var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy base branch to target branches",
 	Long:  `Deploy base branch to target branches`,
-	Run: func(cmd *cobra.Command, args []string) {
-		deployBranches(
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return deployBranches(
 			viper.GetStringMapString("release.branch-map"),
 			viper.GetString("release.on-deploy.body-branch-suffix-find"),
 			viper.GetString("release.on-deploy.body-branch-suffix-replace"),
@@ -38,7 +38,7 @@ var deployCmd = &cobra.Command{
 	},
 }
 
-func deployBranches(branchMap map[string]string, suffixFind, suffixReplace string) {
+func deployBranches(branchMap map[string]string, suffixFind, suffixReplace string) error {
 	blue := color.New(color.FgCyan)
 	yellow := color.New(color.FgYellow)
 	green := color.New(color.FgGreen)
@@ -52,7 +52,7 @@ func deployBranches(branchMap map[string]string, suffixFind, suffixReplace strin
 	if integrateGithubRelease {
 		release, err := gc.LastRelease()
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
 		reference = release.GetTagName()
 		green.Printf("Deploying %s\n", release.GetHTMLURL())
@@ -69,13 +69,11 @@ func deployBranches(branchMap map[string]string, suffixFind, suffixReplace strin
 
 	intervalDuration, err := time.ParseDuration(releaseInterval)
 	if err != nil {
-		fmt.Printf("error parsing interval %v", err)
-		return
+		return fmt.Errorf("error parsing interval: %v", err)
 	}
 	offsetDuration, err := time.ParseDuration(releaseOffset)
 	if err != nil {
-		fmt.Printf("error parsing offset %v", err)
-		return
+		return fmt.Errorf("error parsing offset: %v", err)
 	}
 
 	t := time.Now()
@@ -93,13 +91,13 @@ func deployBranches(branchMap map[string]string, suffixFind, suffixReplace strin
 	text := strings.Split(input, "\n")[0]
 	if text != "ok" {
 		fmt.Printf("No deployment\n")
-		return
+		return nil
 	}
 	fmt.Println(text)
 
 	if firstRelease.Before(time.Now()) {
 		yellow.Println("\ndeployment stopped since first released time has passed. Please run again")
-		return
+		return nil
 	}
 
 	d := time.Until(firstRelease)
@@ -127,8 +125,7 @@ func deployBranches(branchMap map[string]string, suffixFind, suffixReplace strin
 		out, err := exec.Command("sh", "-c", cmd).Output()
 
 		if err != nil {
-			fmt.Printf("error executing command: %s %v\n", cmd, err)
-			return
+			return fmt.Errorf("error executing command %s:%v", cmd, err)
 		}
 		green.Printf("%s Triggered Successfully %s\n", time.Now().Format("15:04:05"), strings.TrimSpace(string(out)))
 
@@ -141,8 +138,7 @@ func deployBranches(branchMap map[string]string, suffixFind, suffixReplace strin
 			green.Printf("%s Updating release on github %s\n", time.Now().Format("15:04:05"), strings.TrimSpace(string(out)))
 			release, err := gc.LastRelease()
 			if err != nil {
-				fmt.Println(err)
-				return
+				return err
 			}
 
 			findText := fmt.Sprintf("%s ![](https://img.shields.io/badge/released%s)", branchText, suffixFind)
@@ -152,11 +148,12 @@ func deployBranches(branchMap map[string]string, suffixFind, suffixReplace strin
 			release.Body = &newBody
 			release, err = gc.EditRelease(release)
 			if err != nil {
-				fmt.Println(err)
-				return
+				return err
 			}
 
 			green.Printf("%s Updated release on github %s\n", time.Now().Format("15:04:05"), strings.TrimSpace(string(out)))
 		}
 	}
+
+	return nil
 }

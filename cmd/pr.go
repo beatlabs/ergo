@@ -26,12 +26,12 @@ var prCmd = &cobra.Command{
 	Use:   "pr",
 	Short: "Create a pull request [github]",
 	Long:  `Create a pull request on github from compare branch to base branch`,
-	Run: func(cmd *cobra.Command, args []string) {
-		createPR()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return createPR()
 	},
 }
 
-func createPR() {
+func createPR() error {
 	var err error
 	yellow := color.New(color.FgYellow)
 
@@ -55,15 +55,16 @@ func createPR() {
 	text := strings.Split(input, "\n")[0]
 	if text != "ok" {
 		fmt.Printf("No PR\n")
-		return
+		return nil
 	}
 
 	pr, err := gc.CreatePR(baseBranch, compareBranch, title, description)
 
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
 	fmt.Printf("Created PR %s\n", *pr.HTMLURL)
+
+	return nil
 }

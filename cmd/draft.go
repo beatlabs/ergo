@@ -25,12 +25,12 @@ var draftCmd = &cobra.Command{
 	Use:   "draft",
 	Short: "Create a draft release [github]",
 	Long:  `Create a draft release on github comparing one target branch with the base branch`,
-	Run: func(cmd *cobra.Command, args []string) {
-		draftRelease()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return draftRelease()
 	},
 }
 
-func draftRelease() {
+func draftRelease() error {
 	yellow := color.New(color.FgYellow)
 	branchMap := viper.GetStringMapString("release.branch-map")
 
@@ -48,8 +48,7 @@ func draftRelease() {
 	for _, branch := range branches {
 		ahead, behind, err := r.CompareBranch(baseBranch, branch)
 		if err != nil {
-			fmt.Printf("error comparing %s %s:%s\n", baseBranch, branch, err)
-			return
+			return fmt.Errorf("error comparing %s %s:%s", baseBranch, branch, err)
 		}
 		branchCommitDiff := repo.DiffCommitBranch{
 			Branch:     branch,
@@ -69,13 +68,14 @@ func draftRelease() {
 	text := strings.Split(input, "\n")[0]
 	if text != "ok" {
 		fmt.Printf("No draft\n")
-		return
+		return nil
 	}
 
 	release, err := gc.CreateDraftRelease(name, tagName, releaseBody)
 
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 	fmt.Println(release)
+	return nil
 }

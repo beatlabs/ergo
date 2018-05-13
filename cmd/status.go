@@ -20,14 +20,13 @@ var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Print the status of branches compared to baseBranch",
 	Long:  `Prints the commits ahead and behind of status branches compared to a base branch`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		var diff []repo.DiffCommitBranch
 
 		for _, branch := range branches {
 			ahead, behind, err := r.CompareBranch(baseBranch, branch)
 			if err != nil {
-				fmt.Printf("error comparing %s %s:%s\n", baseBranch, branch, err)
-				return
+				return fmt.Errorf("error comparing %s %s:%v", baseBranch, branch, err)
 			}
 			branchCommitDiff := repo.DiffCommitBranch{
 				Branch:     branch,
@@ -40,9 +39,12 @@ var statusCmd = &cobra.Command{
 
 		if detail {
 			printDetail(diff)
-			return
+
+			return nil
 		}
 		printBranchCompare(diff)
+
+		return nil
 	},
 }
 

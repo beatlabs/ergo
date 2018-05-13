@@ -17,19 +17,17 @@ func TestRepo(t *testing.T) {
 	// r := New(repoURL, path, "origin")
 	// cleanup after test run
 	defer func() {
-		os.RemoveAll(path)
+		err := os.RemoveAll(path)
 
 		if err != nil {
-			t.Errorf("error cleaning up %s: %v", path, err)
-			return
+			t.Fatalf("error cleaning up %s: %v", path, err)
 		}
 	}()
 
 	r, err := NewClone(repoURL, path, "origin")
 
 	if err != nil || r == nil {
-		t.Errorf("Error cloning repo:%v\n", err)
-		return
+		t.Fatalf("Error cloning repo:%v\n", err)
 	}
 
 	t.Run("Clone already cloned", func(t *testing.T) {
@@ -37,7 +35,6 @@ func TestRepo(t *testing.T) {
 
 		if err == nil {
 			t.Errorf("Expected 'repository already exists' error")
-			return
 		}
 	})
 
@@ -45,7 +42,6 @@ func TestRepo(t *testing.T) {
 		r2, err := NewFromPath(path, "origin")
 		if err != nil || r2 == nil {
 			t.Errorf("error loading repo from path: %v", err)
-			return
 		}
 	})
 
@@ -72,7 +68,6 @@ func TestRepo(t *testing.T) {
 
 		if commitMessage != "feature-b" {
 			t.Errorf("expected:%s, got:%s", "feature-b", commitMessage)
-			return
 		}
 	})
 }

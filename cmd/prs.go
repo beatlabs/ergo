@@ -17,18 +17,17 @@ var prsCmd = &cobra.Command{
 	Use:   "prs",
 	Short: "List open pull requests [github]",
 	Long:  `List open pull requests on github`,
-	Run: func(cmd *cobra.Command, args []string) {
-		listPRs()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return listPRs()
 	},
 }
 
-func listPRs() {
+func listPRs() error {
 	var err error
 
 	prs, err := gc.ListPRs()
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
 	headerFmt := color.New(color.FgGreen, color.Underline).SprintfFunc()
@@ -47,10 +46,12 @@ func listPRs() {
 			title = title[:60]
 		}
 		t := *pr.CreatedAt
+
 		at := fmt.Sprintf("%d-%02d-%02d %02d:%02d", t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute())
 		tbl.AddRow(*pr.Number, title, branch, *pr.HTMLURL, (*pr.User).GetLogin(), at)
 	}
 
 	tbl.Print()
 
+	return nil
 }

@@ -18,7 +18,7 @@ func FormatMessage(c *object.Commit, firstLinePrefix string, nextLinesPrefix str
 			continue
 		}
 
-		prefix := ""
+		var prefix string
 
 		if len(outputStrings) == 0 {
 			prefix = firstLinePrefix

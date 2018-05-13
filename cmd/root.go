@@ -45,7 +45,7 @@ Also it minimizing the browser interaction with github
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Hola! type `ergo help`")
 	},
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		var err error
 
 		noRepoCmds := make(map[string]bool)
@@ -53,19 +53,20 @@ Also it minimizing the browser interaction with github
 		noRepoCmds["version"] = true
 
 		if _, ok := noRepoCmds[cmd.Name()]; ok {
-			return
+			return nil
 		}
 
 		err = initializeRepo()
 		if err != nil {
-			fmt.Printf("Error Initializing repo: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("initialize repo: %v", err)
 		}
 
 		gc, err = github.NewClient(context.Background(), viper.GetString("github.access-token"), organizationName, repoName)
 		if err != nil {
+			// NOTE: ergo may still be of use without github support
 			fmt.Printf("Error Initializing github %v\n", err)
 		}
+		return nil
 	},
 }
 
@@ -107,8 +108,7 @@ func initializeRepo() error {
 	}
 
 	if err != nil {
-		fmt.Printf("Error loading repo:%s\n", err)
-		return err
+		return fmt.Errorf("load repo:%s", err)
 	}
 
 	if !skipFetch {

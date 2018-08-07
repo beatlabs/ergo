@@ -46,6 +46,26 @@ Flags:
       --skipFetch         Skip fetch. When set you may not be up to date with remote
 ```
 
+## Jira Integration
+
+ergo can also update Jira tasks. More specifically, each time a draft command is run, ergo will try to update the fix version of a task.
+For this to work, you need to include the task ID in at least one commit that will be included in the draft release. The actual name of
+the fix version is configurable, as well as the regular expression that will try to match the task IDs.
+
+Updating the fix versions can be enabled using the `--update-jira-fix-versions` flag.
+
+Example:
+
+```
+$ ergo draft --base staging-develop --update-jira-fix-versions
+Changing fixed version for task TEAM-30 to Next Release
+Changing fixed version for task TEAM-33 to Next Release
+Changing fixed version for task TEAM-36 to Next Release
+Changing fixed version for task TEAM-37 to Next Release
+Changing fixed version for task TEAM-947 to Next Release
+```
+
+In the previous example we have set `jira.draft-version` to 'Next Release' and `jira.task-regex` to `[A-Z0-9]+-[0-9]+`
 
 ## SSH access
 For ssh access to repos make sure you have a running ssh-agent 
@@ -85,4 +105,10 @@ repos:
   ergo-functional-test-repo:
     status-branches: "master,ft-release-gr,ft-release-es,ft-release-it"
     release-branches: "ft-release-es,ft-release-gr,ft-release-it"
+jira:
+  url: "https://your.jira.url.com"
+  username: "username"
+  password: "password"
+  task-regex: "[A-Z0-9]+-[0-9]+"
+  draft-version: "Next Release"
 ```

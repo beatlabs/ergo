@@ -18,7 +18,7 @@ func init() {
 
 var statusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Print the status of branches compared to baseBranch",
+	Short: "Print the status of branches compared to base branch",
 	Long:  `Prints the commits ahead and behind of status branches compared to a base branch`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var diff []repo.DiffCommitBranch

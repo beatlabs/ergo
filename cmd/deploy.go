@@ -104,7 +104,7 @@ func deployBranches(branchMap map[string]string, suffixFind, suffixReplace strin
 	green.Printf("Deployment will start in %s\n", d.String())
 	time.Sleep(d)
 
-	for i, branch := range branches {
+	for i, branch := range releaseBranches {
 		if i != 0 {
 			time.Sleep(intervalDuration)
 			t = t.Add(intervalDuration)
@@ -146,7 +146,7 @@ func deployBranches(branchMap map[string]string, suffixFind, suffixReplace strin
 			newBody := strings.Replace(*(release.Body), findText, replaceText, -1)
 			fmt.Println(newBody)
 			release.Body = &newBody
-			release, err = gc.EditRelease(release)
+			_, err = gc.EditRelease(release)
 			if err != nil {
 				return err
 			}

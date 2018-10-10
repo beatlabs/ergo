@@ -37,23 +37,34 @@ var rootCmd = &cobra.Command{
 	Long: `Ergo helps to
 * compare multiple branches
 * push to multiple branches with time interval (useful for multiple release environments)
-Also it minimizing the browser interaction with github
-* handles pull requests
-* drafts a release
-* updates release notes
+* minimize the browser interaction with github:
+	* create/show a pull request
+	* list open pull requests
+	* add reviewers to a pull request
+	* draft a release
+	* update release notes
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Hola! type `ergo help`")
 	},
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		var err error
-
+		// commands not requiring a repo
 		noRepoCmds := make(map[string]bool)
+		// commands not requiring to fetch from a repo
+		skipFetchCmds := make(map[string]bool)
+
 		noRepoCmds["help"] = true
 		noRepoCmds["version"] = true
+		skipFetchCmds["pr"] = true
+		skipFetchCmds["prs"] = true
 
 		if _, ok := noRepoCmds[cmd.Name()]; ok {
 			return nil
+		}
+
+		if _, ok := skipFetchCmds[cmd.Name()]; ok {
+			skipFetch = true
 		}
 
 		err = initializeRepo()
@@ -106,7 +117,6 @@ func initializeRepo() error {
 	} else {
 		r, err = repo.NewFromPath(path, viper.GetString("generic.remote"))
 	}
-
 	if err != nil {
 		return fmt.Errorf("load repo:%s", err)
 	}

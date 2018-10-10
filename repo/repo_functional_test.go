@@ -14,11 +14,9 @@ func TestRepo(t *testing.T) {
 	path := "/tmp/ergo-functional-test-repo"
 	repoURL := "https://github.com/dbaltas/ergo-functional-test-repo.git"
 
-	// r := New(repoURL, path, "origin")
 	// cleanup after test run
 	defer func() {
 		err := os.RemoveAll(path)
-
 		if err != nil {
 			t.Fatalf("error cleaning up %s: %v", path, err)
 		}

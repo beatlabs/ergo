@@ -15,7 +15,6 @@ import (
 func (r *Repo) CurrentBranch() (string, error) {
 	cmd := fmt.Sprintf("cd %s && git rev-parse --abbrev-ref HEAD", r.path)
 	out, err := exec.Command("sh", "-c", cmd).Output()
-
 	if err != nil {
 		return "", errors.Wrap(err, "executing external command")
 	}
@@ -75,7 +74,6 @@ func commitsAhead(repo *git.Repository, branch string, commonAncestor string) ([
 func mergeBase(branch1 string, branch2 string, directory string) (string, error) {
 	cmd := fmt.Sprintf("cd %s && git merge-base origin/%s origin/%s", directory, branch1, branch2)
 	out, err := exec.Command("sh", "-c", cmd).Output()
-
 	if err != nil {
 		return "", errors.Wrap(err, "executing external command")
 	}

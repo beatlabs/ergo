@@ -73,7 +73,6 @@ func NewClone(repoURL, path, remoteName string) (*Repo, error) {
 		URL:               r.repoURL,
 		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +112,6 @@ func (r *Repo) GitRemote() *git.Remote {
 
 func (r *Repo) setGitRemote() error {
 	remote, err := r.repo.Remote(r.remoteName)
-
 	if err != nil {
 		return fmt.Errorf("error loading remote %s:%v", r.remoteName, err)
 	}

@@ -7,14 +7,26 @@ Ergo (έργο), greek name for work, is a list of utilities for the daily devel
 # getting the status of repo branches compared to master
 ergo status
 ```
-![ergo sample output](ergo-status.png)
+![ergo sample output](static/ergo-status.png)
 
 ```
 # List open github pull requests for google/go-github repo
 ergo prs
 ```
-![go-github open prs](go-github-open-prs.png)
+![go-github open prs](static/github-open-prs.png)
 
+```
+# Display details for github pull request #17
+ergo pr 17
+```
+![go-github open prs](static/github-pr-details.png)
+
+```
+# Create a github pull request through command line
+# In the screenshot the compare flag overrides the current branch
+ergo pr --title 'my title' --reviewers johndoe,nstratos
+```
+![go-github open prs](static/github-create-pr.png)
 
 ## Installation
 ```

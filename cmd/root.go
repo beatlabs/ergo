@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/dbaltas/ergo/github"
+	"github.com/dbaltas/ergo/jira"
 	"github.com/dbaltas/ergo/repo"
 	"github.com/fatih/color"
 	homedir "github.com/mitchellh/go-homedir"
@@ -28,6 +29,7 @@ var (
 	repoName              string
 
 	gc *github.Client
+	jc *jira.Client
 	r  *repo.Repo
 )
 
@@ -77,6 +79,17 @@ var rootCmd = &cobra.Command{
 			// NOTE: ergo may still be of use without github support
 			fmt.Printf("Error Initializing github %v\n", err)
 		}
+
+		tp := jira.BasicAuthTransport{
+			Username: viper.GetString("jira.username"),
+			Password: viper.GetString("jira.password"),
+		}
+		jc, err = jira.NewClient(tp.Client(), viper.GetString("jira.url"))
+
+		if err != nil {
+			fmt.Printf("Error Initializing jira client %v\n", err)
+		}
+
 		return nil
 	},
 }

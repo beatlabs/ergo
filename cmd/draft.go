@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -15,10 +16,13 @@ import (
 )
 
 var releaseTag string
+var updateJiraFixVersions bool
 
 func init() {
 	rootCmd.AddCommand(draftCmd)
 	draftCmd.Flags().StringVar(&releaseTag, "releaseTag", "", "Tag for the release. If empty, curent date in YYYY.MM.DD will be used")
+	draftCmd.Flags().BoolVar(&updateJiraFixVersions, "update-jira-fix-versions", false, "Update fix versions on Jira based on the configuration string")
+
 }
 
 var draftCmd = &cobra.Command{
@@ -60,6 +64,28 @@ func draftRelease() error {
 	}
 
 	releaseBody := github.ReleaseBody(diff, viper.GetString("github.release-body-prefix"), branchMap)
+	if updateJiraFixVersions {
+		// Eliminate duplicates by using a map
+		uTasks := make(map[string]bool)
+		taskRegExp := viper.GetString("jira.task-regex")
+
+		re := regexp.MustCompile(fmt.Sprintf("(?m)(%v)", taskRegExp))
+		for _, commit := range diff[0].Behind {
+			res := re.FindAllStringSubmatch(commit.Message, -1)
+			if len(res) > 0 {
+				for _, task := range res {
+					uTasks[task[0]] = true
+				}
+			}
+		}
+
+		// Get all the values
+		tasks := make([]string, 0, len(uTasks))
+		for task := range uTasks {
+			tasks = append(tasks, task)
+		}
+		jc.UpdateIssueFixVersions(tasks)
+	}
 
 	fmt.Println(releaseBody)
 	reader := bufio.NewReader(os.Stdin)

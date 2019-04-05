@@ -60,7 +60,7 @@ func (gc *RepositoryClient) CreateDraftRelease(ctx context.Context, name, tagNam
 	return err
 }
 
-// LastRelease fetches the latest release for a repository.
+// LastRelease fetches the latest published release for a repository.
 func (gc *RepositoryClient) LastRelease(ctx context.Context) (*ergo.Release, error) {
 	githubRelease, _, err := gc.client.Repositories.GetLatestRelease(
 		ctx, gc.organization, gc.repo)
@@ -84,6 +84,49 @@ func (gc *RepositoryClient) LastRelease(ctx context.Context) (*ergo.Release, err
 		TagName:    githubRelease.GetTagName(),
 		ReleaseURL: githubRelease.GetHTMLURL(),
 	}, nil
+}
+
+// LastDraftRelease fetches the latest draft release for a repository.
+func (gc *RepositoryClient) LastDraftRelease(ctx context.Context) (ergo.Release, error) {
+	draftReleases, _, err := gc.client.Repositories.ListReleases(
+		ctx, gc.organization, gc.repo, &github.ListOptions{})
+
+	if err != nil {
+		return ergo.Release{}, err
+	}
+
+	for _, githubRelease := range draftReleases {
+		if *githubRelease.Draft {
+			gc.curRelease = githubRelease
+
+			release := ergo.Release{
+				ID:         *githubRelease.ID,
+				Body:       *githubRelease.Body,
+				TagName:    githubRelease.GetTagName(),
+				ReleaseURL: githubRelease.GetHTMLURL(),
+			}
+
+			return release, nil
+		}
+	}
+
+	return ergo.Release{}, errors.New("could not find draft release")
+}
+
+// DeleteRelease deletes a release for a repository.
+func (gc *RepositoryClient) DeleteRelease(ctx context.Context, release ergo.Release) error {
+	resp, err := gc.client.Repositories.DeleteRelease(
+		ctx, gc.organization, gc.repo, release.ID)
+
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusNoContent {
+		return errors.New("could not delete release: " + resp.Status)
+	}
+
+	return nil
 }
 
 // EditRelease allows to edit a repository release.

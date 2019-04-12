@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/spf13/viper"
-	viper2 "github.com/taxibeat/ergo/config/viper"
+	viper2 "github.com/thebeatapp/ergo/config/viper"
 )
 
 func TestGetConfigShouldNotReturnError(t *testing.T) {

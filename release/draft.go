@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/taxibeat/ergo"
-	"github.com/taxibeat/ergo/cli"
+	"github.com/thebeatapp/ergo"
+	"github.com/thebeatapp/ergo/cli"
 )
 
 // Draft is responsible for creating the draft release.

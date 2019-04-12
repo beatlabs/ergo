@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/taxibeat/ergo/config"
-	"github.com/taxibeat/ergo/config/viper"
+	"github.com/thebeatapp/ergo/config"
+	"github.com/thebeatapp/ergo/config/viper"
 )
 
 var (

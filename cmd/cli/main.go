@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/taxibeat/ergo/commands"
+	"github.com/thebeatapp/ergo/commands"
 )
 
 func main() {

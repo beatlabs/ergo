@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/taxibeat/ergo"
-	"github.com/taxibeat/ergo/cli"
+	"github.com/thebeatapp/ergo"
+	"github.com/thebeatapp/ergo/cli"
 )
 
 // Deploy is responsible to describe the release process.

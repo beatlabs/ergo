@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/taxibeat/ergo"
-	"github.com/taxibeat/ergo/mock"
-	"github.com/taxibeat/ergo/release"
+	"github.com/thebeatapp/ergo"
+	"github.com/thebeatapp/ergo/mock"
+	"github.com/thebeatapp/ergo/release"
 )
 
 var (

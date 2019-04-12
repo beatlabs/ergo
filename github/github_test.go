@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	gogithub "github.com/google/go-github/github"
-	"github.com/taxibeat/ergo"
-	"github.com/taxibeat/ergo/github"
+	"github.com/thebeatapp/ergo"
+	"github.com/thebeatapp/ergo/github"
 )
 
 func setup() (client *gogithub.Client, mux *http.ServeMux, serverURL string, teardown func()) {

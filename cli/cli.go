@@ -7,7 +7,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
-	"github.com/taxibeat/ergo"
+	"github.com/thebeatapp/ergo"
 )
 
 var (

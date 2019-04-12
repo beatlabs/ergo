@@ -5,7 +5,7 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/hashicorp/go-version"
-	"github.com/taxibeat/ergo"
+	"github.com/thebeatapp/ergo"
 )
 
 // Version is responsible to describe the actions of visioning.

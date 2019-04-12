@@ -5,7 +5,7 @@ Ergo (έργο), greek name for work, is a list of utilities for the daily relea
 
 ## Installation
 ```
-$ go get github.com/taxibeat/ergo
+$ go get github.com/thebeatapp/ergo
 ```
 
 ## Usage

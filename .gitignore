@@ -1,2 +1,6 @@
 # binary
 ergo
+.idea
+.DS_Store
+ergo-test
+cmd/cli/cli

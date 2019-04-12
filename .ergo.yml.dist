@@ -1,0 +1,14 @@
+generic:
+  base-branch: "develop"
+  status-branches: "develop,staging-develop,master,release-a,release-b"
+  release-branches: "release-a,release-b"
+github:
+  access-token: "<ACCESS_TOKEN>"
+  release-body-prefix: "### Added"
+release:
+  branch-map:
+    release-gr: ":greece:"
+    release-mx: ":mexico:"
+  on-deploy:
+    body-branch-suffix-find: "-No-red.svg"
+    body-branch-suaffix-replace: "-green.svg"

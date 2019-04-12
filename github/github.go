@@ -2,171 +2,245 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strings"
+	"net/http"
 
-	"github.com/dbaltas/ergo/repo"
 	"github.com/google/go-github/github"
+	"github.com/taxibeat/ergo"
 	"golang.org/x/oauth2"
 )
 
-// Client for github API
-type Client struct {
-	ctx          context.Context
-	accessToken  string
+// RepositoryClient for Github API.
+type RepositoryClient struct {
 	organization string
 	repo         string
 	client       *github.Client
+	curRelease   *github.RepositoryRelease
 }
 
-// NewClient instantiate a Client
-func NewClient(ctx context.Context, accessToken, organization, repo string) (*Client, error) {
-	if accessToken == "" {
-		return nil, fmt.Errorf("github.access_token not defined in config")
-	}
-
-	client := githubClient(ctx, accessToken)
-	return &Client{
-		ctx:          ctx,
-		accessToken:  accessToken,
-		organization: organization,
-		repo:         repo,
-		client:       client,
-	}, nil
-}
-
-// CreateDraftRelease creates a draft release.
-func (gc *Client) CreateDraftRelease(name, tagName, releaseBody string) (*github.RepositoryRelease, error) {
-	isDraft := true
-	release := &github.RepositoryRelease{
-		Name:    &name,
-		TagName: &tagName,
-		Draft:   &isDraft,
-		Body:    &releaseBody,
-	}
-
-	release, _, err := gc.client.Repositories.CreateRelease(
-		gc.ctx,
-		gc.organization,
-		gc.repo,
-		release,
-	)
-
-	return release, err
-}
-
-// LastRelease fetches the latest release for a repository.
-func (gc *Client) LastRelease() (*github.RepositoryRelease, error) {
-	release, _, err := gc.client.Repositories.GetLatestRelease(
-		gc.ctx, gc.organization, gc.repo)
-
-	return release, err
-}
-
-// EditRelease allows to edit a repository release.
-func (gc *Client) EditRelease(release *github.RepositoryRelease) (*github.RepositoryRelease, error) {
-	release, _, err := gc.client.Repositories.EditRelease(
-		gc.ctx, gc.organization, gc.repo, *(release.ID), release)
-
-	return release, err
-}
-
-// CreatePR creates a pull request
-func (gc *Client) CreatePR(baseBranch, compareBranch, title, body string) (*github.PullRequest, error) {
-	pull := &github.NewPullRequest{
-		Title: &title,
-		Head:  &compareBranch,
-		Base:  &baseBranch,
-		Body:  &body,
-	}
-
-	pr, _, err := gc.client.PullRequests.Create(gc.ctx, gc.organization, gc.repo, pull)
-	if err != nil {
-		return nil, err
-	}
-
-	return pr, nil
-}
-
-// GetPR gets a pull request
-func (gc *Client) GetPR(number int) (*github.PullRequest, error) {
-	pr, _, err := gc.client.PullRequests.Get(gc.ctx, gc.organization, gc.repo, number)
-	if err != nil {
-		return nil, err
-	}
-
-	return pr, nil
-}
-
-// RequestReviewersForPR assigns reviewers to a pull request
-func (gc *Client) RequestReviewersForPR(number int, reviewers, teamReviewers string) (*github.PullRequest, error) {
-	payload := github.ReviewersRequest{
-		Reviewers:     strings.Split(reviewers, ","),
-		TeamReviewers: strings.Split(teamReviewers, ","),
-	}
-	fmt.Println(github.Stringify(payload))
-	pr, _, err := gc.client.PullRequests.RequestReviewers(gc.ctx, gc.organization, gc.repo, number, payload)
-	if err != nil {
-		return nil, err
-	}
-
-	return pr, nil
-}
-
-// ListPRs creates a pull request
-func (gc *Client) ListPRs() ([]*github.PullRequest, error) {
-	opt := &github.PullRequestListOptions{
-		Sort:      "created",
-		Direction: "desc",
-	}
-
-	pulls, _, err := gc.client.PullRequests.List(gc.ctx, gc.organization, gc.repo, opt)
-	if err != nil {
-		return nil, err
-	}
-
-	return pulls, nil
-}
-
-// ReleaseBody output needed for github release body.
-func ReleaseBody(commitDiffBranches []repo.DiffCommitBranch, releaseBodyPrefix string, branchMap map[string]string) string {
-	var formattedCommits []string
-	var formattedBranches []string
-	var header, body string
-
-	firstLinePrefix := "- [ ] "
-	nextLinePrefix := "     "
-	lineSeparator := "\r\n"
-
-	for _, diffBranch := range commitDiffBranches {
-		branchText, ok := branchMap[diffBranch.Branch]
-		if !ok {
-			branchText = branchMap[diffBranch.Branch]
-		}
-		formattedBranches = append(formattedBranches,
-			fmt.Sprintf("%s ![](https://img.shields.io/badge/released-No-red.svg)", branchText))
-	}
-
-	for _, commit := range commitDiffBranches[0].Behind {
-		formattedCommits = append(formattedCommits, repo.FormatMessage(commit, firstLinePrefix, nextLinePrefix, lineSeparator))
-		body = fmt.Sprintf("%s%s%s",
-			body,
-			repo.FormatMessage(commit, firstLinePrefix, nextLinePrefix, lineSeparator),
-			lineSeparator)
-	}
-
-	header = strings.Join(formattedBranches, " ")
-	body = strings.Join(formattedCommits, lineSeparator)
-	parts := []string{header, releaseBodyPrefix, body}
-
-	return strings.Join(parts, strings.Repeat(lineSeparator, 2))
-}
-
-func githubClient(ctx context.Context, accessToken string) *github.Client {
+// NewGithubClient set up a github client.
+func NewGithubClient(ctx context.Context, accessToken string) *github.Client {
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: accessToken},
 	)
 	tc := oauth2.NewClient(ctx, ts)
 
 	return github.NewClient(tc)
+}
+
+// NewRepositoryClient instantiate a RepositoryClient.
+func NewRepositoryClient(organization, repo string, client *github.Client) *RepositoryClient {
+	return &RepositoryClient{
+		organization: organization,
+		repo:         repo,
+		client:       client,
+	}
+}
+
+// CreateDraftRelease creates a draft release.
+func (gc *RepositoryClient) CreateDraftRelease(ctx context.Context, name, tagName, releaseBody string) error {
+	isDraft := true
+	githubRelease := &github.RepositoryRelease{
+		Name:    &name,
+		TagName: &tagName,
+		Draft:   &isDraft,
+		Body:    &releaseBody,
+	}
+
+	githubRelease, _, err := gc.client.Repositories.CreateRelease(
+		ctx,
+		gc.organization,
+		gc.repo,
+		githubRelease,
+	)
+
+	gc.curRelease = githubRelease
+
+	return err
+}
+
+// LastRelease fetches the latest release for a repository.
+func (gc *RepositoryClient) LastRelease(ctx context.Context) (*ergo.Release, error) {
+	githubRelease, _, err := gc.client.Repositories.GetLatestRelease(
+		ctx, gc.organization, gc.repo)
+
+	errResponse, ok := err.(*github.ErrorResponse)
+
+	errHasResponse := ok
+	if errHasResponse && errResponse.Response.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	gc.curRelease = githubRelease
+
+	return &ergo.Release{
+		ID:         *githubRelease.ID,
+		Body:       *githubRelease.Body,
+		TagName:    githubRelease.GetTagName(),
+		ReleaseURL: githubRelease.GetHTMLURL(),
+	}, nil
+}
+
+// EditRelease allows to edit a repository release.
+func (gc *RepositoryClient) EditRelease(ctx context.Context, release *ergo.Release) (*ergo.Release, error) {
+
+	if gc.curRelease == nil {
+		return nil, errors.New("curRelease is empty")
+	}
+
+	githubRelease := gc.curRelease
+	githubRelease.Body = &release.Body
+
+	githubRelease, _, err := gc.client.Repositories.EditRelease(
+		ctx, gc.organization, gc.repo, release.ID, githubRelease)
+
+	release.Body = *githubRelease.Body
+
+	return release, err
+}
+
+// GetRef branch reference object given the branch name.
+func (gc *RepositoryClient) GetRef(ctx context.Context, branch string) (*ergo.Reference, error) {
+	ref, _, err := gc.client.Git.GetRef(ctx, gc.organization, gc.repo, "refs/heads/"+branch)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ergo.Reference{SHA: *ref.Object.SHA, Ref: *ref.Ref}, nil
+}
+
+// CreateTag given the version name.
+func (gc *RepositoryClient) CreateTag(ctx context.Context, versionName, sha, m string) (*ergo.Tag, error) {
+	s := "commit"
+	tag := github.Tag{
+		Tag:     &versionName,
+		Message: &m,
+		Object:  &github.GitObject{Type: &s, SHA: &sha},
+	}
+	t, _, err := gc.client.Git.CreateTag(ctx, gc.organization, gc.repo, &tag)
+	errResponse, ok := err.(*github.ErrorResponse)
+	if ok && errResponse.Response.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error on tag creation: %v", err)
+	}
+
+	url := "tags/" + versionName
+	ref := github.Reference{
+		Object: &github.GitObject{
+			SHA: &sha,
+		},
+		Ref: &url,
+	}
+
+	_, _, err = gc.client.Git.CreateRef(ctx, gc.organization, gc.repo, &ref)
+	errResponse, ok = err.(*github.ErrorResponse)
+	if ok && errResponse.Response.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error on tag creation: %v", err)
+	}
+
+	return &ergo.Tag{Name: *t.Tag}, err
+}
+
+// CompareBranch compare the base branch with the given one.
+func (gc *RepositoryClient) CompareBranch(ctx context.Context, baseBranch, branch string) (*ergo.StatusReport, error) {
+	commitsAhead, err := gc.commitsDiff(ctx, baseBranch, branch)
+	if err != nil {
+		return nil, err
+	}
+
+	commitsBehind, err := gc.commitsDiff(ctx, branch, baseBranch)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ergo.StatusReport{Branch: branch, BaseBranch: baseBranch, Ahead: commitsAhead, Behind: commitsBehind}, nil
+}
+
+// commitsDiff finds the differences in commits between two branches.
+func (gc *RepositoryClient) commitsDiff(ctx context.Context, baseBranch, branch string) ([]*ergo.Commit, error) {
+	comparison, _, err := gc.client.Repositories.CompareCommits(ctx, gc.organization, gc.repo, baseBranch, branch)
+	if err != nil {
+		return nil, err
+	}
+
+	var commitsAhead []*ergo.Commit
+	for _, commit := range comparison.Commits {
+		commitAhead := &ergo.Commit{Message: *commit.Commit.Message}
+		commitsAhead = append(commitsAhead, commitAhead)
+	}
+
+	return commitsAhead, nil
+}
+
+// DiffCommits is responsible to find the diff-commits and return a StatusReport for each of
+// given releaseBranches.
+func (gc *RepositoryClient) DiffCommits(ctx context.Context, releaseBranches []string, baseBranch string) ([]*ergo.StatusReport, error) {
+	var statusReports []*ergo.StatusReport
+	for _, branch := range releaseBranches {
+		statusReport, err := gc.CompareBranch(ctx, baseBranch, branch)
+		if err != nil {
+			return nil, fmt.Errorf("error comparing base branch %s %s:%s", baseBranch, branch, err)
+		}
+		statusReports = append(statusReports, statusReport)
+	}
+	return statusReports, nil
+}
+
+// UpdateBranchFromTag is responsible to update a branch from tag.
+func (gc *RepositoryClient) UpdateBranchFromTag(ctx context.Context, tag, toBranch string, force bool) error {
+	ref, err := gc.getRefFromGitHub(ctx, tag)
+	if err != nil {
+		return err
+	}
+
+	branchRef := "heads/" + toBranch
+	ref.Ref = &branchRef
+	_, _, err = gc.client.Git.UpdateRef(ctx, gc.organization, gc.repo, ref, force)
+	if err != nil {
+		return fmt.Errorf("error on update branch from tag: %v", err)
+	}
+
+	return nil
+}
+
+// GetRefFromTag get reference from tag.
+func (gc *RepositoryClient) GetRefFromTag(ctx context.Context, tag string) (*ergo.Reference, error) {
+	ref, err := gc.getRefFromGitHub(ctx, tag)
+	if err != nil {
+		return nil, err
+	}
+	if ref == nil {
+		return nil, nil
+	}
+	return &ergo.Reference{SHA: *ref.Object.SHA, Ref: *ref.Ref}, nil
+}
+
+// getRefFromGitHub get reference from github and returns the github.Reference object.
+func (gc *RepositoryClient) getRefFromGitHub(ctx context.Context, tag string) (*github.Reference, error) {
+	ref, _, err := gc.client.Git.GetRef(ctx, gc.organization, gc.repo, "tags/"+tag)
+
+	errResponse, ok := err.(*github.ErrorResponse)
+	if ok && errResponse.Response.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error getting tag reference %v", err)
+	}
+
+	return ref, nil
+}
+
+// GetRepoName return the repository name.
+func (gc *RepositoryClient) GetRepoName() string {
+	return gc.organization + "/" + gc.repo
 }

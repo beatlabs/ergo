@@ -1,39 +1,15 @@
-[![Build Status](https://travis-ci.org/dbaltas/ergo.svg?branch=master)](https://travis-ci.org/dbaltas/ergo)
+[![Build Status](https://travis-ci.org/taxibeat/ergo.svg?branch=master)](https://travis-ci.org/taxibeat/ergo)
 # ergo
 
-Ergo (έργο), greek name for work, is a list of utilities for the daily developer workflow
-
-```
-# getting the status of repo branches compared to master
-ergo status
-```
-![ergo sample output](static/ergo-status.png)
-
-```
-# List open github pull requests for google/go-github repo
-ergo prs
-```
-![go-github open prs](static/github-open-prs.png)
-
-```
-# Display details for github pull request #17
-ergo pr 17
-```
-![go-github open prs](static/github-pr-details.png)
-
-```
-# Create a github pull request through command line
-# In the screenshot the compare flag overrides the current branch
-ergo pr --title 'my title' --reviewers johndoe,nstratos
-```
-![go-github open prs](static/github-create-pr.png)
+Ergo (έργο), greek name for work, is a list of utilities for the daily release workflow.
 
 ## Installation
 ```
-$ go get github.com/dbaltas/ergo
+$ go get github.com/taxibeat/ergo
 ```
 
 ## Usage
+
 ```
 Usage:
   ergo [flags]
@@ -43,84 +19,68 @@ Available Commands:
   deploy      Deploy base branch to target branches
   draft       Create a draft release [github]
   help        Help about any command
-  pr          Create a pull request [github]
-  prs         List open pull requests [github]
-  status      Print the status of branches compared to baseBranch
-  version     Print the version of ergo
+  status      the status of branches compared to base branch
+  tag         Create a tag on branch
+  version     the version of ergo
 
 Flags:
       --base string       Base branch for the comparison.
       --branches string   Comma separated list of branches
-      --detail            Print commits in detail
   -h, --help              help for ergo
+      --owner string
       --path string       Location to store or retrieve from the repo (default ".")
-      --repoUrl string    git repo Url. ssh and https supported
-      --skipFetch         Skip fetch. When set you may not be up to date with remote
+      --repo string
 ```
 
-## Jira Integration
+## CLI commands
 
-ergo can also update Jira tasks. More specifically, each time a draft command is run, ergo will try to update the fix version of a task.
-For this to work, you need to include the task ID in at least one commit that will be included in the draft release. The actual name of
-the fix version is configurable, as well as the regular expression that will try to match the task IDs.
+#### Status
 
-Updating the fix versions can be enabled using the `--update-jira-fix-versions` flag.
+Getting the status of remote repo branches compared to a base branch.
 
-Example:
-
-```
-$ ergo draft --base staging-develop --update-jira-fix-versions
-Changing fixed version for task TEAM-30 to Next Release
-Changing fixed version for task TEAM-33 to Next Release
-Changing fixed version for task TEAM-36 to Next Release
-Changing fixed version for task TEAM-37 to Next Release
-Changing fixed version for task TEAM-947 to Next Release
+```bash
+ergo status \
+--owner dbaltas \
+--repo ergo \
+--base master \
+--branches stable,testsuite/baseNew,testsuite/base,testsuite/featureA,testsuite/featureB,testsuite/featureC
 ```
 
-In the previous example we have set `jira.draft-version` to 'Next Release' and `jira.task-regex` to `[A-Z0-9]+-[0-9]+`
+![ergo sample output](static/ergo-status.png)
 
-## SSH access
-For ssh access to repos make sure you have a running ssh-agent 
+#### Draft
+
+Create a draft release having description of the commit diff. It will try to increment the last found tag version.
+
+```bash
+ergo draft \
+--owner dbaltas \
+--repo ergo \
+--base master \
+--branches release-gr,release-it
 ```
-$ eval `ssh-agent`
-Agent pid 4586
-$ ssh-add 
+
+#### Deploy
+
+Push the release tag into the release branches (and update the release body accordingly). You need to have published the draft release first.
+
+```bash
+ergo deploy \
+--owner dbaltas \
+--repo ergo \
+--releaseInterval 15m \
+--branches release-pe,release-mx,release-co,release-cl,release-gr
 ```
 
 ## Github Access
 To communicate with github you will need a [personal access token](https://github.com/settings/tokens) added on the configuration file as `access-token` on github
 
-## Config
+## Configuration
 Configuration is read from $HOME/.ergo.yaml
 
-Sample config file
-```yaml
-generic:
-  remote: origin
-  base-branch: "master"
-  status-branches: "develop,staging,master,release-es,release-gr"
-  release-branches: "release-es,release-gr"
-github:
-  access-token: "access-token-goes-here"
-  release-body-prefix: "### Added"
-release:
-  branch-map:
-    release-gr: ":greece:"
-    release-es: ":es:"
-    ft-release-gr: ":greece:"
-    ft-release-es: ":es:"
-    ft-release-it: ":it:"
-  on-deploy:
-    body-branch-suffix-find: "-No-red.svg"
-    body-branch-suffix-replace: "-green.svg"
-repos:
-  ergo-functional-test-repo:
-    status-branches: "master,ft-release-gr,ft-release-es,ft-release-it"
-    release-branches: "ft-release-es,ft-release-gr,ft-release-it"
-jira:
-  url: "https://your.jira.url.com"
-  username: "username"
-  password: "password"
-  task-regex: "[A-Z0-9]+-[0-9]+"
-  draft-version: "Next Release"
-```
+You have to use this in order to:
+- Add your github access token
+- Provide ergo with defaults. In the CLI commands you may skip some of the parameters in case that there are defaults values set.
+- Information about the draft release body and what will change at the time of the release.
+
+[Sample config file](.ergo.yml.dist)

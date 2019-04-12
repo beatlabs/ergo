@@ -1,5 +1,4 @@
-[![Build Status](https://travis-ci.org/taxibeat/ergo.svg?branch=master)](https://travis-ci.org/taxibeat/ergo)
-# ergo
+# ergo [![Build Status](https://travis-ci.com/thebeatapp/ergo.svg?branch=master)](https://travis-ci.com/thebeatapp/ergo) [![codecov](https://codecov.io/gh/thebeatapp/ergo/branch/master/graph/badge.svg)](https://codecov.io/gh/thebeatapp/ergo)
 
 Ergo (έργο), greek name for work, is a list of utilities for the daily release workflow.
 

@@ -3,6 +3,9 @@ language: go
 go:
   - "1.12.x"
 
+notifications:
+  email: false
+
 env:
   - GO111MODULE=on
 
@@ -11,7 +14,8 @@ before_install:
 
 script:
   - golangci-lint run
-  - go test ./... -race -cover -coverprofile=coverage.txt -covermode=atomic
+  - go test -v ./... -race -cover -coverprofile=coverage.txt -covermode=atomic
 
-notifications:
-  email: false
+after_success:
+- export CODECOV_TOKEN="ec1a7246-d903-4451-a62f-555edccf3d4c"
+- bash <(curl -s https://codecov.io/bash)

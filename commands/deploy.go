@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/spf13/cobra"
-	"github.com/taxibeat/ergo/cli"
-	"github.com/taxibeat/ergo/github"
-	"github.com/taxibeat/ergo/release"
+	"github.com/thebeatapp/ergo/cli"
+	"github.com/thebeatapp/ergo/github"
+	"github.com/thebeatapp/ergo/release"
 )
 
 // defineDeployCommand defines the deploy command.

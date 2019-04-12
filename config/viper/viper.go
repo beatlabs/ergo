@@ -7,7 +7,7 @@ import (
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
-	"github.com/taxibeat/ergo/config"
+	"github.com/thebeatapp/ergo/config"
 )
 
 // Options struct.

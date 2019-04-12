@@ -3,7 +3,7 @@ package release
 import (
 	"context"
 
-	"github.com/taxibeat/ergo"
+	"github.com/thebeatapp/ergo"
 )
 
 // Tag describes the actions of tag entity.

@@ -3,7 +3,7 @@ package mock
 import (
 	"context"
 
-	"github.com/taxibeat/ergo"
+	"github.com/thebeatapp/ergo"
 )
 
 // RepositoryClient is a mock implementation.

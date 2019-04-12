@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/taxibeat/ergo"
-	"github.com/taxibeat/ergo/cli"
+	"github.com/thebeatapp/ergo"
+	"github.com/thebeatapp/ergo/cli"
 )
 
 // Draft is responsible for creating the draft release.
@@ -51,7 +51,7 @@ func (d *Draft) Create(ctx context.Context, releaseName, tagName string) error {
 	d.c.PrintLine(releaseBody)
 
 	confirm, err := d.c.Confirmation(
-		"Drafting the release",
+		"Draft the release",
 		"No draft",
 		"The draft release is ready",
 	)

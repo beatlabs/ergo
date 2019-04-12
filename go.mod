@@ -1,4 +1,4 @@
-module github.com/taxibeat/ergo
+module github.com/thebeatapp/ergo
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect

@@ -2,7 +2,7 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/taxibeat/ergo/cli"
+	"github.com/thebeatapp/ergo/cli"
 )
 
 // defineVersionCommand defines the version command.

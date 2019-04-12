@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/google/go-github/github"
-	"github.com/taxibeat/ergo"
+	"github.com/thebeatapp/ergo"
 	"golang.org/x/oauth2"
 )
 

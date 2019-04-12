@@ -51,7 +51,7 @@ func (d *Draft) Create(ctx context.Context, releaseName, tagName string) error {
 	d.c.PrintLine(releaseBody)
 
 	confirm, err := d.c.Confirmation(
-		"Drafting the release",
+		"Draft the release",
 		"No draft",
 		"The draft release is ready",
 	)

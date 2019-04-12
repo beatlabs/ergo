@@ -10,7 +10,7 @@ env:
   - wget -O - -q https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.16.0
 
 script:
-  - golangci-lint run
+  - ./golangci-lint.sh run
   - go test ./... -race -cover -coverprofile=coverage.txt -covermode=atomic
 
 notifications:

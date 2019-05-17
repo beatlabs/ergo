@@ -12,7 +12,7 @@ func defineVersionCommand() *cobra.Command {
 		Short: "the version of ergo",
 		Long:  "the version of ergo",
 		Run: func(cmd *cobra.Command, args []string) {
-			cli.NewCLI().PrintColorizedLine("Version: ", "0.4.0", cli.WarningType)
+			cli.NewCLI().PrintColorizedLine("Version: ", "0.4.1", cli.WarningType)
 		},
 	}
 }

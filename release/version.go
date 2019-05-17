@@ -3,9 +3,9 @@ package release
 import (
 	"context"
 
+	"github.com/beatlabs/ergo"
 	"github.com/blang/semver"
 	"github.com/hashicorp/go-version"
-	"github.com/thebeatapp/ergo"
 )
 
 // Version is responsible to describe the actions of visioning.

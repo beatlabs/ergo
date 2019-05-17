@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/thebeatapp/ergo"
-	"github.com/thebeatapp/ergo/mock"
-	"github.com/thebeatapp/ergo/release"
+	"github.com/beatlabs/ergo"
+	"github.com/beatlabs/ergo/mock"
+	"github.com/beatlabs/ergo/release"
 )
 
 func TestNewVersionShouldNotReturnNilObject(t *testing.T) {

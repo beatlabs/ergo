@@ -5,7 +5,7 @@ generic:
 github:
   access-token: "<ACCESS_TOKEN>"
   release-body-prefix: "### Added"
-  default-owner: "default-owner e.g. thebeatapp"
+  default-owner: "default-owner e.g. beatlabs"
   default-repo: "default-repo e.g. ergo"
 release:
   branch-map:

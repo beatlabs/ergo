@@ -1,8 +1,8 @@
 package commands
 
 import (
+	"github.com/beatlabs/ergo/cli"
 	"github.com/spf13/cobra"
-	"github.com/thebeatapp/ergo/cli"
 )
 
 // defineVersionCommand defines the version command.

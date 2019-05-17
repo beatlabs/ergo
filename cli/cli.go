@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/beatlabs/ergo"
 	"github.com/fatih/color"
 	"github.com/rodaine/table"
-	"github.com/thebeatapp/ergo"
 )
 
 var (

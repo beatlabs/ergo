@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/beatlabs/ergo/config"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
-	"github.com/thebeatapp/ergo/config"
 )
 
 // Options struct.

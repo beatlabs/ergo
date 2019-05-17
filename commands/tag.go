@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/thebeatapp/ergo/github"
-	"github.com/thebeatapp/ergo/release"
+	"github.com/beatlabs/ergo/github"
+	"github.com/beatlabs/ergo/release"
 
+	"github.com/beatlabs/ergo/cli"
 	"github.com/spf13/cobra"
-	"github.com/thebeatapp/ergo/cli"
 )
 
 // defineTagCommand defines the tag command.

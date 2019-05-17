@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/beatlabs/ergo/config"
+	"github.com/beatlabs/ergo/config/viper"
 	"github.com/spf13/cobra"
-	"github.com/thebeatapp/ergo/config"
-	"github.com/thebeatapp/ergo/config/viper"
 )
 
 var (

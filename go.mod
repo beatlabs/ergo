@@ -1,4 +1,4 @@
-module github.com/thebeatapp/ergo
+module github.com/beatlabs/ergo
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect

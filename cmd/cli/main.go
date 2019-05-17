@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/thebeatapp/ergo/commands"
+	"github.com/beatlabs/ergo/commands"
 )
 
 func main() {

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/beatlabs/ergo"
+	"github.com/beatlabs/ergo/cli"
 	"github.com/pkg/errors"
-	"github.com/thebeatapp/ergo"
-	"github.com/thebeatapp/ergo/cli"
 )
 
 // Draft is responsible for creating the draft release.

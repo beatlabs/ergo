@@ -3,10 +3,10 @@ package commands
 import (
 	"context"
 
+	"github.com/beatlabs/ergo/cli"
+	"github.com/beatlabs/ergo/github"
+	"github.com/beatlabs/ergo/release"
 	"github.com/spf13/cobra"
-	"github.com/thebeatapp/ergo/cli"
-	"github.com/thebeatapp/ergo/github"
-	"github.com/thebeatapp/ergo/release"
 )
 
 // defineDeployCommand defines the deploy command.

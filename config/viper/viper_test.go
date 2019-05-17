@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	viper2 "github.com/beatlabs/ergo/config/viper"
 	"github.com/spf13/viper"
-	viper2 "github.com/thebeatapp/ergo/config/viper"
 )
 
 func TestGetConfigShouldNotReturnError(t *testing.T) {

@@ -4,11 +4,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/thebeatapp/ergo/mock"
+	"github.com/beatlabs/ergo/mock"
 
-	"github.com/thebeatapp/ergo"
-	"github.com/thebeatapp/ergo/cli"
-	"github.com/thebeatapp/ergo/release"
+	"github.com/beatlabs/ergo"
+	"github.com/beatlabs/ergo/cli"
+	"github.com/beatlabs/ergo/release"
 )
 
 func TestNewDeployShouldNotReturnNilObject(t *testing.T) {

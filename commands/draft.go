@@ -3,12 +3,12 @@ package commands
 import (
 	"context"
 
-	"github.com/thebeatapp/ergo/release"
+	"github.com/beatlabs/ergo/release"
 
-	"github.com/thebeatapp/ergo/cli"
+	"github.com/beatlabs/ergo/cli"
 
+	"github.com/beatlabs/ergo/github"
 	"github.com/spf13/cobra"
-	"github.com/thebeatapp/ergo/github"
 )
 
 // defineDraftCommand defines the draft command.

@@ -4,11 +4,11 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/thebeatapp/ergo/github"
+	"github.com/beatlabs/ergo/github"
 
+	"github.com/beatlabs/ergo"
+	"github.com/beatlabs/ergo/cli"
 	"github.com/spf13/cobra"
-	"github.com/thebeatapp/ergo"
-	"github.com/thebeatapp/ergo/cli"
 )
 
 // defineStatusCommand defines the status command.

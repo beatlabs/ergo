@@ -1,11 +1,11 @@
-# ergo [![Build Status](https://travis-ci.com/thebeatapp/ergo.svg?branch=master)](https://travis-ci.com/thebeatapp/ergo) [![codecov](https://codecov.io/gh/thebeatapp/ergo/branch/master/graph/badge.svg)](https://codecov.io/gh/thebeatapp/ergo)
+# ergo [![Build Status](https://travis-ci.com/beatlabs/ergo.svg?branch=master)](https://travis-ci.com/beatlabs/ergo) [![codecov](https://codecov.io/gh/beatlabs/ergo/branch/master/graph/badge.svg)](https://codecov.io/gh/beatlabs/ergo)
 
 Ergo (έργο), greek name for work, is a list of utilities for the daily release workflow.
 
 ## Installation
 
 ```bash
-$ curl -L https://github.com/thebeatapp/ergo/releases/download/0.4.0/ergo_0.4.0_darwin-amd64 --output ergo && chmod +x ergo && mv ergo /usr/local/bin/ergo
+$ curl -L https://github.com/beatlabs/ergo/releases/download/0.4.0/ergo_0.4.0_darwin-amd64 --output ergo && chmod +x ergo && mv ergo /usr/local/bin/ergo
 ```
 
 ## Usage

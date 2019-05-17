@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/beatlabs/ergo"
+	"github.com/beatlabs/ergo/cli"
 	"github.com/pkg/errors"
-	"github.com/thebeatapp/ergo"
-	"github.com/thebeatapp/ergo/cli"
 )
 
 // Deploy is responsible to describe the release process.

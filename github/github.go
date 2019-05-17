@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/beatlabs/ergo"
 	"github.com/google/go-github/github"
-	"github.com/thebeatapp/ergo"
 	"golang.org/x/oauth2"
 )
 

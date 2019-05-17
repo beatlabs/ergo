@@ -1,6 +1,6 @@
 package mock
 
-import "github.com/thebeatapp/ergo"
+import "github.com/beatlabs/ergo"
 
 // CLI is a mock implementation.
 type CLI struct {

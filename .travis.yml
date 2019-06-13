@@ -17,5 +17,4 @@ script:
   - go test -v ./... -race -cover -coverprofile=coverage.txt -covermode=atomic
 
 after_success:
-- export CODECOV_TOKEN="ec1a7246-d903-4451-a62f-555edccf3d4c"
 - bash <(curl -s https://codecov.io/bash)

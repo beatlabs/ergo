@@ -9,7 +9,9 @@ type MessageLevel string
 type Host interface {
 	CreateDraftRelease(ctx context.Context, name, tagName, releaseBody string) error
 	LastRelease(ctx context.Context) (*Release, error)
+	LastDraftRelease(ctx context.Context) (Release, error)
 	EditRelease(ctx context.Context, release *Release) (*Release, error)
+	DeleteRelease(ctx context.Context, release Release) error
 	CompareBranch(ctx context.Context, baseBranch, branch string) (*StatusReport, error)
 	DiffCommits(ctx context.Context, releaseBranches []string, baseBranch string) ([]*StatusReport, error)
 	CreateTag(ctx context.Context, versionName, sha, m string) (*Tag, error)

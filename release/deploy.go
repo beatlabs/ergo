@@ -117,7 +117,7 @@ func (r *Deploy) printReleaseTimeBoard(releaseTime time.Time, releaseBranches []
 	var times [][]string
 
 	for _, branch := range releaseBranches {
-		timesRow := []string{branch, releaseTime.Format("15:04")}
+		timesRow := []string{branch, releaseTime.Format("15:04 MST")}
 		releaseTime = releaseTime.Add(intervalDuration)
 		times = append(times, timesRow)
 	}

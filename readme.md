@@ -5,7 +5,7 @@ Ergo (έργο), greek name for work, is a list of utilities for the daily relea
 ## Installation
 
 ```bash
-$ curl -L https://github.com/beatlabs/ergo/releases/download/0.4.0/ergo_0.4.0_darwin-amd64 --output ergo && chmod +x ergo && mv ergo /usr/local/bin/ergo
+$ curl -L https://github.com/beatlabs/ergo/releases/download/0.5.0/ergo-0.5.0-darwin-amd64 --output ergo && chmod +x ergo && mv ergo /usr/local/bin/ergo
 ```
 
 ## Usage

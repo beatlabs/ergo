@@ -71,13 +71,6 @@ linters:
     - unused
     - varcheck
 
-#
-#  enable-all: true
-#  disable:
-#  - maligned
-#  - prealloc
-#  - gochecknoglobals
-
 run:
   skip-dirs:
   - vendor

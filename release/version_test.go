@@ -1,4 +1,4 @@
-package release_test
+package release
 
 import (
 	"errors"
@@ -6,12 +6,11 @@ import (
 
 	"github.com/beatlabs/ergo"
 	"github.com/beatlabs/ergo/mock"
-	"github.com/beatlabs/ergo/release"
 )
 
 func TestNewVersionShouldNotReturnNilObject(t *testing.T) {
 	var host ergo.Host
-	if release.NewVersion(host, "baseBranch") == nil {
+	if NewVersion(host, "baseBranch") == nil {
 		t.Error("expected Tag object to not be nil.")
 	}
 }
@@ -30,7 +29,7 @@ func TestNextVersionShouldReturnTheNextVersionWithDefaultParameters(t *testing.T
 		Name: "1.0.1",
 	}
 
-	got, err := release.NewVersion(host, "baseBranch").
+	got, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "", "", false, false)
 	if err != nil {
 		t.Fatal(err)
@@ -58,7 +57,7 @@ func TestNextVersionShouldReturnTheNextVersionWithSuffixSameSHA(t *testing.T) {
 		Name: "1.0.0-mx",
 	}
 
-	got, err := release.NewVersion(host, "baseBranch").
+	got, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "", "mx", false, false)
 	if err != nil {
 		t.Fatal(err)
@@ -86,7 +85,7 @@ func TestNextVersionShouldReturnTheNextVersionWithSuffixDifferentSHA(t *testing.
 		Name: "1.0.1-mx",
 	}
 
-	got, err := release.NewVersion(host, "baseBranch").
+	got, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "", "mx", false, false)
 	if err != nil {
 		t.Fatal(err)
@@ -108,7 +107,7 @@ func TestNextVersionShouldReturnTheNextVersionWithInputVersion(t *testing.T) {
 		Name: "v13.0.5.1-custom",
 	}
 
-	got, err := release.NewVersion(host, "baseBranch").
+	got, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "v13.0.5.1-custom", "", false, false)
 	if err != nil {
 		t.Fatal(err)
@@ -130,7 +129,7 @@ func TestNextVersionShouldReturnTheNextVersionWithInputVersionAndSuffix(t *testi
 		Name: "v13.0.5.1-custom",
 	}
 
-	got, err := release.NewVersion(host, "baseBranch").
+	got, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "v13.0.5.1", "custom", false, false)
 	if err != nil {
 		t.Fatal(err)
@@ -155,7 +154,7 @@ func TestNextVersionShouldReturnTheNextVersionWithCustomLastReleaseVersion(t *te
 		Name: "0.0.1",
 	}
 
-	got, err := release.NewVersion(host, "baseBranch").
+	got, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "", "", false, false)
 	if err != nil {
 		t.Fatal(err)
@@ -180,7 +179,7 @@ func TestNextVersionShouldReturnTheNextVersionWithMinorFlag(t *testing.T) {
 		Name: "1.1.0",
 	}
 
-	got, err := release.NewVersion(host, "baseBranch").
+	got, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "", "", false, true)
 	if err != nil {
 		t.Fatal(err)
@@ -205,7 +204,7 @@ func TestNextVersionShouldReturnTheNextVersionWithMajorFlag(t *testing.T) {
 		Name: "2.0.0",
 	}
 
-	got, err := release.NewVersion(host, "baseBranch").
+	got, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "", "", true, false)
 	if err != nil {
 		t.Fatal(err)
@@ -233,7 +232,7 @@ func TestNextVersionShouldReturnTheNextVersionWithSuffixAndMajor(t *testing.T) {
 		Name: "2.0.0-mx",
 	}
 
-	got, err := release.NewVersion(host, "baseBranch").
+	got, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "", "mx", true, false)
 	if err != nil {
 		t.Fatal(err)
@@ -258,7 +257,7 @@ func TestNextVersionShouldReturnTheNextVersionWithMajorAndMinor(t *testing.T) {
 		Name: "2.0.0",
 	}
 
-	got, err := release.NewVersion(host, "baseBranch").
+	got, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "", "", true, true)
 	if err != nil {
 		t.Fatal(err)
@@ -283,7 +282,7 @@ func TestNextVersionShouldReturnDefaultVersionWhenNoReleases(t *testing.T) {
 		Name: "0.0.1",
 	}
 
-	got, err := release.NewVersion(host, "baseBranch").
+	got, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "", "", false, false)
 	if err != nil {
 		t.Fatal(err)
@@ -300,7 +299,7 @@ func TestNextVersionShouldReturnErrorOnGetRef(t *testing.T) {
 		return nil, errors.New("")
 	}
 
-	_, err := release.NewVersion(host, "baseBranch").
+	_, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "", "", false, false)
 	if err == nil {
 		t.Error("expected NextVersion to return error")
@@ -316,7 +315,7 @@ func TestNextVersionShouldReturnErrorOnLastRelease(t *testing.T) {
 		return nil, errors.New("")
 	}
 
-	_, err := release.NewVersion(host, "baseBranch").
+	_, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "", "", false, false)
 	if err == nil {
 		t.Error("expected NextVersion to return error")
@@ -337,7 +336,7 @@ func TestNextVersionShouldReturnDefaultVersionOnWrongFormat(t *testing.T) {
 		Name: "0.0.1",
 	}
 
-	got, err := release.NewVersion(host, "baseBranch").
+	got, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "", "", false, false)
 	if err != nil {
 		t.Fatal(err)
@@ -360,7 +359,7 @@ func TestNextVersionShouldReturnErrorOnLastReleaseWithSuffix(t *testing.T) {
 		return nil, errors.New("")
 	}
 
-	_, err := release.NewVersion(host, "baseBranch").
+	_, err := NewVersion(host, "baseBranch").
 		NextVersion(ctx, "", "-mx", false, false)
 	if err == nil {
 		t.Error("expected NextVersion to return error")

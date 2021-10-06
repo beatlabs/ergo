@@ -1,4 +1,4 @@
-package release_test
+package release
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 
 	"github.com/beatlabs/ergo"
 	"github.com/beatlabs/ergo/mock"
-	"github.com/beatlabs/ergo/release"
 )
 
 var (
@@ -16,7 +15,7 @@ var (
 
 func TestNewTagShouldNotReturnNilObject(t *testing.T) {
 	var host ergo.Host
-	if release.NewTag(host) == nil {
+	if NewTag(host) == nil {
 		t.Error("expected Tag object to not be nil.")
 	}
 }
@@ -31,7 +30,7 @@ func TestCreateShouldCreateTag(t *testing.T) {
 		return &ergo.Tag{Name: versionName}, nil
 	}
 
-	got, err := release.NewTag(host).Create(ctx, &ergo.Version{Name: versionName, SHA: "sha"})
+	got, err := NewTag(host).Create(ctx, &ergo.Version{Name: versionName, SHA: "sha"})
 	if err != nil {
 		t.Fatalf("error creating tag: %v", err)
 	}
@@ -49,7 +48,7 @@ func TestCreateShouldReturnErrorForDifferentVersionNames(t *testing.T) {
 		return &ergo.Tag{Name: "2.0.0"}, nil
 	}
 
-	got, err := release.NewTag(host).Create(ctx, &ergo.Version{Name: "2.0.0", SHA: "sha"})
+	got, err := NewTag(host).Create(ctx, &ergo.Version{Name: "2.0.0", SHA: "sha"})
 	if err != nil {
 		t.Fatalf("error creating tag: %v", err)
 	}
@@ -66,7 +65,7 @@ func TestCreateShouldReturnError(t *testing.T) {
 	}
 
 	version := &ergo.Version{Name: "s", SHA: "sha"}
-	if _, err := release.NewTag(host).Create(ctx, version); err == nil {
+	if _, err := NewTag(host).Create(ctx, version); err == nil {
 		t.Errorf("expected Create to return error")
 	}
 }
@@ -78,7 +77,7 @@ func TestExistsTagNameShouldReturnTrue(t *testing.T) {
 		return &ergo.Reference{SHA: "sha", Ref: "ref"}, nil
 	}
 
-	got, err := release.NewTag(host).ExistsTagName(ctx, "name")
+	got, err := NewTag(host).ExistsTagName(ctx, "name")
 	if err != nil {
 		t.Fatalf("error checking for tag name: %v", err)
 	}
@@ -91,7 +90,7 @@ func TestExistsTagNameShouldReturnTrue(t *testing.T) {
 func TestExistsTagNameShouldReturnFalse(t *testing.T) {
 	host := &mock.RepositoryClient{}
 
-	got, err := release.NewTag(host).ExistsTagName(ctx, "name")
+	got, err := NewTag(host).ExistsTagName(ctx, "name")
 	if err != nil {
 		t.Fatalf("error checking for tag name: %v", err)
 	}
@@ -107,7 +106,7 @@ func TestExistsTagNameShouldReturnError(t *testing.T) {
 		return nil, errors.New("")
 	}
 
-	_, err := release.NewTag(host).ExistsTagName(ctx, "name")
+	_, err := NewTag(host).ExistsTagName(ctx, "name")
 	if err == nil {
 		t.Fatalf("expected ExistsTagName to return error")
 	}

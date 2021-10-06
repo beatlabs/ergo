@@ -1,4 +1,4 @@
-package release_test
+package release
 
 import (
 	"errors"
@@ -7,7 +7,6 @@ import (
 	"github.com/beatlabs/ergo"
 	"github.com/beatlabs/ergo/cli"
 	"github.com/beatlabs/ergo/mock"
-	"github.com/beatlabs/ergo/release"
 )
 
 func TestNewDraftShouldNotReturnNilObject(t *testing.T) {
@@ -16,7 +15,7 @@ func TestNewDraftShouldNotReturnNilObject(t *testing.T) {
 	releaseBranches := []string{"test1", "test2"}
 	releaseBodyBranches := map[string]string{"test1": "foo", "test2": "bar"}
 
-	if release.NewDraft(c, host, "test", "", releaseBranches, releaseBodyBranches) == nil {
+	if NewDraft(c, host, "test", "", releaseBranches, releaseBodyBranches) == nil {
 		t.Error("expected draft object to not be nil.")
 	}
 }
@@ -48,7 +47,7 @@ func TestCreateShouldCreateDraft(t *testing.T) {
 	releaseBranches := []string{"release-xx", "release-zz"}
 	releaseBodyBranches := map[string]string{"test1": "foo", "test2": "bar"}
 
-	r := release.NewDraft(c, host, "test", "", releaseBranches, releaseBodyBranches)
+	r := NewDraft(c, host, "test", "", releaseBranches, releaseBodyBranches)
 	if r.Create(ctx, "test", "test") != nil {
 		t.Error("expected create response not to be nil.")
 	}
@@ -68,7 +67,7 @@ func TestCreateDiffCommitsShouldReturnError(t *testing.T) {
 	releaseBranches := []string{"release-xx", "release-zz"}
 	releaseBodyBranches := map[string]string{"test1": "foo", "test2": "bar"}
 
-	r := release.NewDraft(c, host, "test", "", releaseBranches, releaseBodyBranches)
+	r := NewDraft(c, host, "test", "", releaseBranches, releaseBodyBranches)
 	if r.Create(ctx, "test", "test") == nil {
 		t.Error("expected create response to be nil.")
 	}
@@ -88,7 +87,7 @@ func TestCreateCreateDraftReleaseShouldReturnError(t *testing.T) {
 	releaseBranches := []string{"release-xx", "release-zz"}
 	releaseBodyBranches := map[string]string{"test1": "foo", "test2": "bar"}
 
-	r := release.NewDraft(c, host, "test", "", releaseBranches, releaseBodyBranches)
+	r := NewDraft(c, host, "test", "", releaseBranches, releaseBodyBranches)
 	if r.Create(ctx, "test", "test") == nil {
 		t.Error("expected create response to be nil.")
 	}

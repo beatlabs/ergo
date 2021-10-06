@@ -4,3 +4,4 @@ ergo
 .DS_Store
 ergo-test
 cmd/cli/cli
+coverage.txt

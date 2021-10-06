@@ -1,10 +1,9 @@
-package viper_test
+package viper
 
 import (
 	"fmt"
 	"testing"
 
-	viper2 "github.com/beatlabs/ergo/config/viper"
 	"github.com/spf13/viper"
 )
 
@@ -19,7 +18,7 @@ func TestGetConfigShouldNotReturnError(t *testing.T) {
 	v.Set("github.default-owner", "acme")
 	v.Set("github.default-repo", "my-repo")
 
-	vipOpts := viper2.NewOptions()
+	vipOpts := NewOptions()
 	vipOpts.AccToken = "abcd"
 	vipOpts.RefreshConfig()
 	_, err := vipOpts.GetConfig()
@@ -39,7 +38,7 @@ func TestGetConfigShouldReturnError(t *testing.T) {
 	v.Set("github.default-owner", "acme")
 	v.Set("github.default-repo", "my-repo")
 
-	vipOpts := viper2.NewOptions()
+	vipOpts := NewOptions()
 	vipOpts.RefreshConfig()
 	_, err := vipOpts.GetConfig()
 
@@ -59,7 +58,7 @@ func TestGetConfigShouldOverwriteEmptyValuesAfterRefresh(t *testing.T) {
 	v.Set("github.default-repo", "my-repo")
 	v.Set("generic.base-branch", "staging-develop")
 
-	vipOpts := viper2.NewOptions()
+	vipOpts := NewOptions()
 	vipOpts.AccToken = "abcd"
 	vipOpts.RefreshConfig()
 	opts, _ := vipOpts.GetConfig()
@@ -76,7 +75,7 @@ func TestGetConfigShouldOverwriteStatusBranchesAfterRefresh(t *testing.T) {
 	v.Set("github.default-repo", "my-repo")
 	v.Set("generic.status-branches", "develop,master,staging")
 
-	vipOpts := viper2.NewOptions()
+	vipOpts := NewOptions()
 	vipOpts.AccToken = "abcd"
 	vipOpts.RefreshConfig()
 	opts, _ := vipOpts.GetConfig()
@@ -102,7 +101,7 @@ func TestGetConfigShouldOverwriteReleaseBranchesFromSpecificKeyAfterRefresh(t *t
 	v.Set("github.default-repo", "my-repo")
 	v.Set("generic.release-branches", "release-cn,release-vn")
 
-	vipOpts := viper2.NewOptions()
+	vipOpts := NewOptions()
 	vipOpts.AccToken = "abcd"
 	vipOpts.RefreshConfig()
 	opts, _ := vipOpts.GetConfig()
@@ -120,7 +119,7 @@ func TestGetConfigShouldOverwriteReleaseBranchesFromGenericKeyAfterRefresh(t *te
 	v.Set("generic.release-branches", "release-cn,release-vn")
 	v.Set("repos.my-repo.release-branches", "china,vietnam")
 
-	vipOpts := viper2.NewOptions()
+	vipOpts := NewOptions()
 	vipOpts.AccToken = "abcd"
 	vipOpts.RefreshConfig()
 	opts, _ := vipOpts.GetConfig()
@@ -132,7 +131,7 @@ func TestGetConfigShouldOverwriteReleaseBranchesFromGenericKeyAfterRefresh(t *te
 }
 
 func TestGetConfigShouldNotOverwriteNonEmptyValuesAfterRefresh(t *testing.T) {
-	vipOpts := viper2.NewOptions()
+	vipOpts := NewOptions()
 	vipOpts.AccToken = "abcd"
 	vipOpts.Organization = "someorg"
 	vipOpts.RepoName = "somerepo"

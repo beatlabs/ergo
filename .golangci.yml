@@ -50,6 +50,8 @@ run:
   skip-dirs:
   - vendor
 
+  modules-download-mode: vendor
+
 issues:
   exclude-rules:
   - path: _test\.go

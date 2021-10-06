@@ -73,8 +73,8 @@ func (d *Draft) releaseBody(commitDiffBranches []*ergo.StatusReport, releaseBody
 	var formattedBranches []string
 	var header, body string
 
-	firstLinePrefix := "- [ ] "
-	nextLinePrefix := "     "
+	firstLinePrefix := "- "
+	nextLinePrefix := "  "
 	lineSeparator := "\r\n"
 
 	for _, diffBranch := range commitDiffBranches {

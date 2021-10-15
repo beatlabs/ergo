@@ -1,3 +1,4 @@
+.PHONY: release
 
 lint:
 	golangci-lint run -v
@@ -13,3 +14,6 @@ ci-lint:
 
 ci-test:
 	docker-compose -f ./docker-compose.ci.yaml run ergo-ci make test
+
+release:
+	goreleaser build --rm-dist --snapshot

@@ -84,3 +84,14 @@ You have to use this in order to:
 - Information about the draft release body and what will change at the time of the release.
 
 [Sample config file](.ergo.yml.dist)
+
+## Release Ergo
+
+In order to release a new version of Ergo, execute the following steps:
+1. Create a new [release](https://github.com/beatlabs/ergo/releases) and publish it
+2. Execute 
+```bash 
+make release
+````
+3. Edit the created release and add the content of the `dist` folder
+4. Point the README download URL to the latest version

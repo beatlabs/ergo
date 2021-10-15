@@ -6,13 +6,13 @@ import (
 )
 
 // defineVersionCommand defines the version command.
-func defineVersionCommand() *cobra.Command {
+func defineVersionCommand(version string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "the version of ergo",
 		Long:  "the version of ergo",
 		Run: func(cmd *cobra.Command, args []string) {
-			cli.NewCLI().PrintColorizedLine("Version: ", "0.4.1", cli.WarningType)
+			cli.NewCLI().PrintColorizedLine("Version: ", version, cli.WarningType)
 		},
 	}
 }

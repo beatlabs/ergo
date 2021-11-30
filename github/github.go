@@ -39,13 +39,14 @@ func NewRepositoryClient(organization, repo string, client *github.Client) *Repo
 }
 
 // CreateDraftRelease creates a draft release.
-func (gc *RepositoryClient) CreateDraftRelease(ctx context.Context, name, tagName, releaseBody string) error {
+func (gc *RepositoryClient) CreateDraftRelease(ctx context.Context, name, tagName, releaseBody, targetBranch string) error {
 	isDraft := true
 	githubRelease := &github.RepositoryRelease{
-		Name:    &name,
-		TagName: &tagName,
-		Draft:   &isDraft,
-		Body:    &releaseBody,
+		Name:            &name,
+		TagName:         &tagName,
+		Draft:           &isDraft,
+		Body:            &releaseBody,
+		TargetCommitish: &targetBranch,
 	}
 
 	githubRelease, _, err := gc.client.Repositories.CreateRelease(

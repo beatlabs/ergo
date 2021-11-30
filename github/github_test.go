@@ -59,7 +59,7 @@ func TestCreateDraftReleaseShouldCreateADraftRelease(t *testing.T) {
 
 	repClient := NewRepositoryClient("o", "r", client)
 
-	err := repClient.CreateDraftRelease(ctx, "", "", "")
+	err := repClient.CreateDraftRelease(ctx, "", "", "", "")
 	if err != nil {
 		t.Fatalf("CreateDraftRelease should not return the error: %v", err)
 	}

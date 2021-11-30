@@ -64,7 +64,7 @@ func (d *Draft) Create(ctx context.Context, releaseName, tagName string) error {
 		return nil
 	}
 
-	return d.host.CreateDraftRelease(ctx, releaseName, tagName, releaseBody)
+	return d.host.CreateDraftRelease(ctx, releaseName, tagName, releaseBody, d.baseBranch)
 }
 
 // releaseBody output needed for github release body.

@@ -7,7 +7,7 @@ type MessageLevel string
 
 // Host interface describes the host's actions.
 type Host interface {
-	CreateDraftRelease(ctx context.Context, name, tagName, releaseBody string) error
+	CreateDraftRelease(ctx context.Context, name, tagName, releaseBody, targetBranch string) error
 	LastRelease(ctx context.Context) (*Release, error)
 	EditRelease(ctx context.Context, release *Release) (*Release, error)
 	CompareBranch(ctx context.Context, baseBranch, branch string) (*StatusReport, error)

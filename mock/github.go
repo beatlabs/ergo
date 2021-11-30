@@ -21,7 +21,7 @@ type RepositoryClient struct {
 }
 
 // CreateDraftRelease is a mock implementation.
-func (r *RepositoryClient) CreateDraftRelease(ctx context.Context, name, tagName, releaseBody string) error {
+func (r *RepositoryClient) CreateDraftRelease(ctx context.Context, name, tagName, releaseBody, targetBranch string) error {
 	if r.MockCreateDraftReleaseFn != nil {
 		return r.MockCreateDraftReleaseFn()
 	}

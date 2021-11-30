@@ -64,7 +64,7 @@ func (d *Draft) Create(ctx context.Context, releaseName, tagName string) error {
 		return nil
 	}
 
-	return d.host.CreateDraftRelease(ctx, releaseName, tagName, releaseBody)
+	return d.host.CreateDraftRelease(ctx, releaseName, tagName, releaseBody, d.baseBranch)
 }
 
 // releaseBody output needed for github release body.
@@ -73,8 +73,8 @@ func (d *Draft) releaseBody(commitDiffBranches []*ergo.StatusReport, releaseBody
 	var formattedBranches []string
 	var header, body string
 
-	firstLinePrefix := "- [ ] "
-	nextLinePrefix := "     "
+	firstLinePrefix := "- "
+	nextLinePrefix := "  "
 	lineSeparator := "\r\n"
 
 	for _, diffBranch := range commitDiffBranches {

@@ -15,12 +15,12 @@ var (
 )
 
 // Execute entry point for commands.
-func Execute() {
+func Execute(version string) {
 	rootCommand := setUpCommand()
 	defineRootCommandProperties(rootCommand)
 	rootCommand.AddCommand(defineStatusCommand())
 	rootCommand.AddCommand(defineTagCommand())
-	rootCommand.AddCommand(defineVersionCommand())
+	rootCommand.AddCommand(defineVersionCommand(version))
 	rootCommand.AddCommand(defineDraftCommand())
 	rootCommand.AddCommand(defineDeployCommand())
 	if err := rootCommand.Execute(); err != nil {

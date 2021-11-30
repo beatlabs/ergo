@@ -5,7 +5,7 @@ Ergo (έργο), greek name for work, is a list of utilities for the daily relea
 ## Installation
 
 ```bash
-$ curl -L https://github.com/beatlabs/ergo/releases/download/0.4.1/ergo_0.4.1_darwin-amd64 --output ergo && chmod +x ergo && mv ergo /usr/local/bin/ergo
+$ curl -L https://github.com/beatlabs/ergo/releases/download/0.6.0/ergo-0.6.0-darwin-amd64 --output ergo && chmod +x ergo && mv ergo /usr/local/bin/ergo
 ```
 
 ## Usage
@@ -84,3 +84,14 @@ You have to use this in order to:
 - Information about the draft release body and what will change at the time of the release.
 
 [Sample config file](.ergo.yml.dist)
+
+## Release Ergo
+
+In order to release a new version of Ergo, execute the following steps:
+1. Create a new [release](https://github.com/beatlabs/ergo/releases) and publish it
+2. Execute 
+```bash 
+make release
+````
+3. Edit the created release and add the content of the `dist` folder
+4. Point the README download URL to the latest version

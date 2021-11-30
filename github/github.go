@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/beatlabs/ergo"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v41/github"
 	"golang.org/x/oauth2"
 )
 
@@ -39,13 +39,14 @@ func NewRepositoryClient(organization, repo string, client *github.Client) *Repo
 }
 
 // CreateDraftRelease creates a draft release.
-func (gc *RepositoryClient) CreateDraftRelease(ctx context.Context, name, tagName, releaseBody string) error {
+func (gc *RepositoryClient) CreateDraftRelease(ctx context.Context, name, tagName, releaseBody, targetBranch string) error {
 	isDraft := true
 	githubRelease := &github.RepositoryRelease{
-		Name:    &name,
-		TagName: &tagName,
-		Draft:   &isDraft,
-		Body:    &releaseBody,
+		Name:            &name,
+		TagName:         &tagName,
+		Draft:           &isDraft,
+		Body:            &releaseBody,
+		TargetCommitish: &targetBranch,
 	}
 
 	githubRelease, _, err := gc.client.Repositories.CreateRelease(
@@ -168,7 +169,7 @@ func (gc *RepositoryClient) CompareBranch(ctx context.Context, baseBranch, branc
 
 // commitsDiff finds the differences in commits between two branches.
 func (gc *RepositoryClient) commitsDiff(ctx context.Context, baseBranch, branch string) ([]*ergo.Commit, error) {
-	comparison, _, err := gc.client.Repositories.CompareCommits(ctx, gc.organization, gc.repo, baseBranch, branch)
+	comparison, _, err := gc.client.Repositories.CompareCommits(ctx, gc.organization, gc.repo, baseBranch, branch, &github.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

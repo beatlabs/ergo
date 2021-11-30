@@ -1,4 +1,4 @@
-package github_test
+package github
 
 import (
 	"context"
@@ -9,11 +9,10 @@ import (
 	"testing"
 
 	"github.com/beatlabs/ergo"
-	"github.com/beatlabs/ergo/github"
-	gogithub "github.com/google/go-github/github"
+	"github.com/google/go-github/v41/github"
 )
 
-func setup() (client *gogithub.Client, mux *http.ServeMux, serverURL string, teardown func()) {
+func setup() (client *github.Client, mux *http.ServeMux, teardown func()) {
 	const baseURLPath = "/api-v3"
 
 	mux = http.NewServeMux()
@@ -22,45 +21,45 @@ func setup() (client *gogithub.Client, mux *http.ServeMux, serverURL string, tea
 	apiHandler.Handle(baseURLPath+"/", http.StripPrefix(baseURLPath, mux))
 
 	server := httptest.NewServer(apiHandler)
-	client = gogithub.NewClient(nil)
+	client = github.NewClient(nil)
 	clientURL, _ := url.Parse(server.URL + baseURLPath + "/")
 	client.BaseURL = clientURL
 	client.UploadURL = clientURL
 
-	return client, mux, server.URL, server.Close
+	return client, mux, server.Close
 }
 
 func TestNewGithubClient(t *testing.T) {
 	ctx := context.Background()
-	client := github.NewGithubClient(ctx, "access_token")
+	client := NewGithubClient(ctx, "access_token")
 	if client == nil {
 		t.Fatalf("Client should not be nil")
 	}
 }
 
 func TestNewRepositoryClientShouldReturnANewObject(t *testing.T) {
-	client, _, _, teardown := setup()
+	client, _, teardown := setup()
 	defer teardown()
 
-	got := github.NewRepositoryClient("o", "r", client)
+	got := NewRepositoryClient("o", "r", client)
 
 	if got == nil {
-		t.Fatal("NewRepositoryClient should return a new github.RepositoryClient object.")
+		t.Fatal("NewRepositoryClient should return a new RepositoryClient object.")
 	}
 }
 
 func TestCreateDraftReleaseShouldCreateADraftRelease(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, teardown := setup()
+	client, mux, teardown := setup()
 	defer teardown()
 
 	mux.HandleFunc("/repos/o/r/releases", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{}`)
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
-	err := repClient.CreateDraftRelease(ctx, "", "", "")
+	err := repClient.CreateDraftRelease(ctx, "", "", "", "")
 	if err != nil {
 		t.Fatalf("CreateDraftRelease should not return the error: %v", err)
 	}
@@ -68,7 +67,7 @@ func TestCreateDraftReleaseShouldCreateADraftRelease(t *testing.T) {
 
 func TestCompareBranchShouldCompareBranches(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	mux.HandleFunc("/repos/o/r/compare/base...branch", func(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +78,7 @@ func TestCompareBranchShouldCompareBranches(t *testing.T) {
 		fmt.Fprint(w, `{ "commits": [{ "commit": { "message": "foo" } }] }`)
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	got, err := repClient.CompareBranch(ctx, "base", "branch")
 	if err != nil {
@@ -104,7 +103,7 @@ func TestCompareBranchShouldCompareBranches(t *testing.T) {
 
 func TestCompareBranchShouldReturnErrorForInvalidResposne(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	mux.HandleFunc("/repos/o/r/compare/base...branch", func(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +114,7 @@ func TestCompareBranchShouldReturnErrorForInvalidResposne(t *testing.T) {
 		fmt.Fprint(w, `{ "commits": [{ "commit": { "message": "foo" } }] }`)
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	got, err := repClient.CompareBranch(ctx, "base", "branch")
 	if err == nil {
@@ -128,7 +127,7 @@ func TestCompareBranchShouldReturnErrorForInvalidResposne(t *testing.T) {
 
 func TestCompareBranchShouldReturnErrorForInvalidResponseBranchBase(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	mux.HandleFunc("/repos/o/r/compare/base...branch", func(w http.ResponseWriter, r *http.Request) {
@@ -139,7 +138,7 @@ func TestCompareBranchShouldReturnErrorForInvalidResponseBranchBase(t *testing.T
 		fmt.Fprint(w, "invalid")
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	got, err := repClient.CompareBranch(ctx, "base", "branch")
 	if err == nil {
@@ -152,7 +151,7 @@ func TestCompareBranchShouldReturnErrorForInvalidResponseBranchBase(t *testing.T
 
 func TestLastReleaseShouldReturnTheLastRelease(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	want := &ergo.Release{
@@ -166,7 +165,7 @@ func TestLastReleaseShouldReturnTheLastRelease(t *testing.T) {
 		fmt.Fprintf(w, `{ "id": %d, "body": "%s", "tag_name": "%s", "html_url": "%s" }`, want.ID, want.Body, want.TagName, want.ReleaseURL)
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	got, err := repClient.LastRelease(ctx)
 	if err != nil {
@@ -179,14 +178,14 @@ func TestLastReleaseShouldReturnTheLastRelease(t *testing.T) {
 
 func TestLastReleaseShouldNotReturnErrorForInvalidStatusCode(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	mux.HandleFunc("/repos/o/r/releases/latest", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	got, err := repClient.LastRelease(ctx)
 	if err != nil {
@@ -199,14 +198,14 @@ func TestLastReleaseShouldNotReturnErrorForInvalidStatusCode(t *testing.T) {
 
 func TestLastReleaseShouldNotReturnErrorForServerError(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	mux.HandleFunc("/repos/o/r/releases/latest", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	got, err := repClient.LastRelease(ctx)
 	if err == nil {
@@ -219,14 +218,14 @@ func TestLastReleaseShouldNotReturnErrorForServerError(t *testing.T) {
 
 func TestLastReleaseShouldReturnErrorForInvalidPayload(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	mux.HandleFunc("/repos/o/r/releases/latest", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "invalid_payload")
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	got, err := repClient.LastRelease(ctx)
 	if err == nil {
@@ -239,7 +238,7 @@ func TestLastReleaseShouldReturnErrorForInvalidPayload(t *testing.T) {
 
 func TestEditReleaseShouldEditTheRelease(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	want := &ergo.Release{
@@ -256,7 +255,7 @@ func TestEditReleaseShouldEditTheRelease(t *testing.T) {
 		fmt.Fprintf(w, `{ "body": "%s" }`, want.Body)
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	gotLatest, err := repClient.LastRelease(ctx)
 	if err != nil {
@@ -277,10 +276,10 @@ func TestEditReleaseShouldEditTheRelease(t *testing.T) {
 
 func TestEditReleaseShouldReturnErrorForNilCurrentRelease(t *testing.T) {
 	ctx := context.Background()
-	client, _, _, tearDown := setup()
+	client, _, tearDown := setup()
 	defer tearDown()
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	rel, err := repClient.EditRelease(ctx, nil)
 	if err == nil {
@@ -293,7 +292,7 @@ func TestEditReleaseShouldReturnErrorForNilCurrentRelease(t *testing.T) {
 
 func TestCreateTagShouldCreateANewTagForValidArgs(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	want := &ergo.Tag{Name: "tag_name"}
@@ -307,7 +306,7 @@ func TestCreateTagShouldCreateANewTagForValidArgs(t *testing.T) {
 		fmt.Fprint(w, `{}`)
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	got, err := repClient.CreateTag(ctx, "versionName", "SHA", "Message")
 	if err != nil {
@@ -320,7 +319,7 @@ func TestCreateTagShouldCreateANewTagForValidArgs(t *testing.T) {
 
 func TestCreateTagShouldReturnErrorForInvalidRefResponse(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	mux.HandleFunc("/repos/o/r/git/tags", func(w http.ResponseWriter, r *http.Request) {
@@ -332,7 +331,7 @@ func TestCreateTagShouldReturnErrorForInvalidRefResponse(t *testing.T) {
 		fmt.Fprint(w, "invalid_body")
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	tag, err := repClient.CreateTag(ctx, "versionName", "SHA", "Message")
 	if err == nil {
@@ -345,7 +344,7 @@ func TestCreateTagShouldReturnErrorForInvalidRefResponse(t *testing.T) {
 
 func TestCreateTagShouldReturnErrorForInvalidTagResponse(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	mux.HandleFunc("/repos/o/r/git/tags", func(w http.ResponseWriter, r *http.Request) {
@@ -353,7 +352,7 @@ func TestCreateTagShouldReturnErrorForInvalidTagResponse(t *testing.T) {
 		fmt.Fprint(w, "invalid_body")
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	tag, err := repClient.CreateTag(ctx, "versionName", "SHA", "Message")
 	if err == nil {
@@ -366,14 +365,14 @@ func TestCreateTagShouldReturnErrorForInvalidTagResponse(t *testing.T) {
 
 func TestCreateTagShouldReturnErrorForInvalidRefResponseCode(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	mux.HandleFunc("/repos/o/r/git/tags", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	tag, err := repClient.CreateTag(ctx, "versionName", "SHA", "Message")
 	if err != nil {
@@ -386,7 +385,7 @@ func TestCreateTagShouldReturnErrorForInvalidRefResponseCode(t *testing.T) {
 
 func TestCreateTagShouldNotReturnErrorWhenReferenceNotFound(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	mux.HandleFunc("/repos/o/r/git/tags", func(w http.ResponseWriter, r *http.Request) {
@@ -397,7 +396,7 @@ func TestCreateTagShouldNotReturnErrorWhenReferenceNotFound(t *testing.T) {
 		w.WriteHeader(http.StatusNotFound)
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	tag, err := repClient.CreateTag(ctx, "versionName", "SHA", "Message")
 	if err != nil {
@@ -410,7 +409,7 @@ func TestCreateTagShouldNotReturnErrorWhenReferenceNotFound(t *testing.T) {
 
 func TestDiffCommitsShouldReturnTheDiffsForValidInputs(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	want := []*ergo.StatusReport{
@@ -430,7 +429,7 @@ func TestDiffCommitsShouldReturnTheDiffsForValidInputs(t *testing.T) {
 		fmt.Fprintf(w, `{ "commits": [{ "commit": { "message": "%s" } }] }`, want[0].Behind[0].Message)
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	got, err := repClient.DiffCommits(ctx, []string{"base"}, "branch")
 	if err != nil {
@@ -452,14 +451,14 @@ func TestDiffCommitsShouldReturnTheDiffsForValidInputs(t *testing.T) {
 
 func TestDiffCommitsShouldReturnErrorForInvalidPayload(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	mux.HandleFunc("/repos/o/r/compare/base...branch", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "invalid_payload")
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	diffCommits, err := repClient.DiffCommits(ctx, []string{"base"}, "branch")
 	if err == nil {
@@ -472,10 +471,10 @@ func TestDiffCommitsShouldReturnErrorForInvalidPayload(t *testing.T) {
 
 func TestUpdateBranchFromTagShouldUpdateBranchFromGivenTag(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
-	mux.HandleFunc("/repos/o/r/git/refs/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"ref": "ref", "object": {"sha": "sha"}}`)
 	})
 
@@ -483,7 +482,7 @@ func TestUpdateBranchFromTagShouldUpdateBranchFromGivenTag(t *testing.T) {
 		fmt.Fprint(w, "{}")
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	err := repClient.UpdateBranchFromTag(ctx, "test_tag", "to_branch", true)
 	if err != nil {
@@ -493,10 +492,10 @@ func TestUpdateBranchFromTagShouldUpdateBranchFromGivenTag(t *testing.T) {
 
 func TestUpdateBranchFromTagShouldReturnErrorForInvalidUpdateRefPayload(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
-	mux.HandleFunc("/repos/o/r/git/refs/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"ref": "ref", "object": {"sha": "sha"}}`)
 	})
 
@@ -504,7 +503,7 @@ func TestUpdateBranchFromTagShouldReturnErrorForInvalidUpdateRefPayload(t *testi
 		fmt.Fprint(w, "invalid_payload")
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	err := repClient.UpdateBranchFromTag(ctx, "test_tag", "to_branch", true)
 	if err == nil {
@@ -514,10 +513,10 @@ func TestUpdateBranchFromTagShouldReturnErrorForInvalidUpdateRefPayload(t *testi
 
 func TestUpdateBranchFromTagShouldReturnErrorForInvalidGetRefPayload(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
-	mux.HandleFunc("/repos/o/r/git/refs/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "invalid_payload")
 	})
 
@@ -525,7 +524,7 @@ func TestUpdateBranchFromTagShouldReturnErrorForInvalidGetRefPayload(t *testing.
 		fmt.Fprint(w, "{}")
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	err := repClient.UpdateBranchFromTag(ctx, "test_tag", "to_branch", true)
 	if err == nil {
@@ -535,16 +534,16 @@ func TestUpdateBranchFromTagShouldReturnErrorForInvalidGetRefPayload(t *testing.
 
 func TestGetRefFromTagShouldGetAReferenceFromTag(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	want := &ergo.Reference{SHA: "sha", Ref: "ref"}
 
-	mux.HandleFunc("/repos/o/r/git/refs/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `{"ref": "%s", "object": {"sha": "%s"}}`, want.Ref, want.SHA)
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	got, err := repClient.GetRefFromTag(ctx, "test_tag")
 	if err != nil {
@@ -557,14 +556,14 @@ func TestGetRefFromTagShouldGetAReferenceFromTag(t *testing.T) {
 
 func TestGetRefFromTagShouldReturnErrorForInvalidBody(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
-	mux.HandleFunc("/repos/o/r/git/refs/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "invalid_body")
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	got, err := repClient.GetRefFromTag(ctx, "test_tag")
 	if err == nil {
@@ -577,14 +576,14 @@ func TestGetRefFromTagShouldReturnErrorForInvalidBody(t *testing.T) {
 
 func TestGetRefFromTagShouldReturnNilForStatusNotFound(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
-	mux.HandleFunc("/repos/o/r/git/refs/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	got, err := repClient.GetRefFromTag(ctx, "test_tag")
 	if err != nil {
@@ -597,16 +596,16 @@ func TestGetRefFromTagShouldReturnNilForStatusNotFound(t *testing.T) {
 
 func TestGetRefShouldReturnTheReference(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
 	want := &ergo.Reference{SHA: "sha", Ref: "ref"}
 
-	mux.HandleFunc("/repos/o/r/git/refs/heads/test", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/heads/test", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `{"ref": "%s", "object": {"sha": "%s"}}`, want.Ref, want.SHA)
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	got, err := repClient.GetRef(ctx, "test")
 	if err != nil {
@@ -620,14 +619,14 @@ func TestGetRefShouldReturnTheReference(t *testing.T) {
 
 func TestGetRefShouldReturnErrorForInvalidBody(t *testing.T) {
 	ctx := context.Background()
-	client, mux, _, tearDown := setup()
+	client, mux, tearDown := setup()
 	defer tearDown()
 
-	mux.HandleFunc("/repos/o/r/git/refs/heads/test", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/heads/test", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "invalid_body")
 	})
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	got, err := repClient.GetRef(ctx, "test")
 	if err == nil {
@@ -639,10 +638,10 @@ func TestGetRefShouldReturnErrorForInvalidBody(t *testing.T) {
 }
 
 func TestGetRepoNameShouldReturnTheRepoName(t *testing.T) {
-	client, _, _, tearDown := setup()
+	client, _, tearDown := setup()
 	defer tearDown()
 
-	repClient := github.NewRepositoryClient("o", "r", client)
+	repClient := NewRepositoryClient("o", "r", client)
 
 	want := "o/r"
 	got := repClient.GetRepoName()

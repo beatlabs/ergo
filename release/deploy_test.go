@@ -1,4 +1,4 @@
-package release_test
+package release
 
 import (
 	"errors"
@@ -8,14 +8,13 @@ import (
 
 	"github.com/beatlabs/ergo"
 	"github.com/beatlabs/ergo/cli"
-	"github.com/beatlabs/ergo/release"
 )
 
 func TestNewDeployShouldNotReturnNilObject(t *testing.T) {
 	var host ergo.Host
 	c := cli.NewCLI()
 
-	deploy := release.NewDeploy(
+	deploy := NewDeploy(
 		c,
 		host,
 		"baseBranch",
@@ -36,7 +35,7 @@ func TestDoShouldNotReturnErrorWithCorrectParameters(t *testing.T) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
-	err := release.NewDeploy(
+	err := NewDeploy(
 		c,
 		host,
 		"baseBranch",
@@ -57,7 +56,7 @@ func TestDoShouldReturnErrorOnLastRelease(t *testing.T) {
 		return nil, errors.New("")
 	}
 
-	err := release.NewDeploy(
+	err := NewDeploy(
 		nil,
 		host,
 		"baseBranch",
@@ -81,7 +80,7 @@ func TestDoShouldReturnErrorOnConfirmation(t *testing.T) {
 		return false, errors.New("")
 	}}
 
-	err := release.NewDeploy(
+	err := NewDeploy(
 		c,
 		host,
 		"baseBranch",
@@ -105,7 +104,7 @@ func TestDoShouldNotReturnErrorWhenNotConfirm(t *testing.T) {
 		return false, nil
 	}}
 
-	err := release.NewDeploy(
+	err := NewDeploy(
 		c,
 		host,
 		"baseBranch",
@@ -129,7 +128,7 @@ func TestDoShouldReturnErrorWhenReleaseTimeIsPast(t *testing.T) {
 		return true, nil
 	}}
 
-	err := release.NewDeploy(
+	err := NewDeploy(
 		c,
 		host,
 		"baseBranch",
@@ -153,7 +152,7 @@ func TestDoShouldReturnErrorWithBadOffsetTime(t *testing.T) {
 		return true, nil
 	}}
 
-	err := release.NewDeploy(
+	err := NewDeploy(
 		c,
 		host,
 		"baseBranch",
@@ -186,7 +185,7 @@ func TestDoShouldReleaseBranches(t *testing.T) {
 		return true, nil
 	}}
 
-	err := release.NewDeploy(
+	err := NewDeploy(
 		c,
 		host,
 		"baseBranch",

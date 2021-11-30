@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/beatlabs/ergo"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v41/github"
 )
 
 func setup() (client *github.Client, mux *http.ServeMux, teardown func()) {
@@ -59,7 +59,7 @@ func TestCreateDraftReleaseShouldCreateADraftRelease(t *testing.T) {
 
 	repClient := NewRepositoryClient("o", "r", client)
 
-	err := repClient.CreateDraftRelease(ctx, "", "", "")
+	err := repClient.CreateDraftRelease(ctx, "", "", "", "")
 	if err != nil {
 		t.Fatalf("CreateDraftRelease should not return the error: %v", err)
 	}
@@ -474,7 +474,7 @@ func TestUpdateBranchFromTagShouldUpdateBranchFromGivenTag(t *testing.T) {
 	client, mux, tearDown := setup()
 	defer tearDown()
 
-	mux.HandleFunc("/repos/o/r/git/refs/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"ref": "ref", "object": {"sha": "sha"}}`)
 	})
 
@@ -495,7 +495,7 @@ func TestUpdateBranchFromTagShouldReturnErrorForInvalidUpdateRefPayload(t *testi
 	client, mux, tearDown := setup()
 	defer tearDown()
 
-	mux.HandleFunc("/repos/o/r/git/refs/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"ref": "ref", "object": {"sha": "sha"}}`)
 	})
 
@@ -516,7 +516,7 @@ func TestUpdateBranchFromTagShouldReturnErrorForInvalidGetRefPayload(t *testing.
 	client, mux, tearDown := setup()
 	defer tearDown()
 
-	mux.HandleFunc("/repos/o/r/git/refs/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "invalid_payload")
 	})
 
@@ -539,7 +539,7 @@ func TestGetRefFromTagShouldGetAReferenceFromTag(t *testing.T) {
 
 	want := &ergo.Reference{SHA: "sha", Ref: "ref"}
 
-	mux.HandleFunc("/repos/o/r/git/refs/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `{"ref": "%s", "object": {"sha": "%s"}}`, want.Ref, want.SHA)
 	})
 
@@ -559,7 +559,7 @@ func TestGetRefFromTagShouldReturnErrorForInvalidBody(t *testing.T) {
 	client, mux, tearDown := setup()
 	defer tearDown()
 
-	mux.HandleFunc("/repos/o/r/git/refs/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "invalid_body")
 	})
 
@@ -579,7 +579,7 @@ func TestGetRefFromTagShouldReturnNilForStatusNotFound(t *testing.T) {
 	client, mux, tearDown := setup()
 	defer tearDown()
 
-	mux.HandleFunc("/repos/o/r/git/refs/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/tags/test_tag", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
 
@@ -601,7 +601,7 @@ func TestGetRefShouldReturnTheReference(t *testing.T) {
 
 	want := &ergo.Reference{SHA: "sha", Ref: "ref"}
 
-	mux.HandleFunc("/repos/o/r/git/refs/heads/test", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/heads/test", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `{"ref": "%s", "object": {"sha": "%s"}}`, want.Ref, want.SHA)
 	})
 
@@ -622,7 +622,7 @@ func TestGetRefShouldReturnErrorForInvalidBody(t *testing.T) {
 	client, mux, tearDown := setup()
 	defer tearDown()
 
-	mux.HandleFunc("/repos/o/r/git/refs/heads/test", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/repos/o/r/git/ref/heads/test", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "invalid_body")
 	})
 

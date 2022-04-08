@@ -39,7 +39,7 @@ func NewDraft(
 }
 
 // Create is responsible to create a new draft release.
-func (d *Draft) Create(ctx context.Context, releaseName, tagName string) error {
+func (d *Draft) Create(ctx context.Context, releaseName, tagName string, skipConfirm bool) error {
 	diff, err := d.host.DiffCommits(ctx, d.releaseBranches, d.baseBranch)
 	if err != nil {
 		return err
@@ -50,12 +50,15 @@ func (d *Draft) Create(ctx context.Context, releaseName, tagName string) error {
 	d.c.PrintColorizedLine("REPO: ", d.host.GetRepoName(), cli.WarningType)
 	d.c.PrintLine(releaseBody)
 
+	if skipConfirm {
+		return d.host.CreateDraftRelease(ctx, releaseName, tagName, releaseBody, d.baseBranch)
+	}
+
 	confirm, err := d.c.Confirmation(
 		"Draft the release",
 		"No draft",
 		"The draft release is ready",
 	)
-
 	if err != nil {
 		return errors.Wrap(err, "confirmation dialog error")
 	}

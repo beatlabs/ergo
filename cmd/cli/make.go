@@ -1,16 +1,17 @@
+//go:build ignore
 // +build ignore
 
 package main
 
 import (
-"flag"
-"fmt"
-"log"
-"os"
-"os/exec"
-"runtime"
-"strings"
-"sync"
+	"flag"
+	"fmt"
+	"log"
+	"os"
+	"os/exec"
+	"runtime"
+	"strings"
+	"sync"
 )
 
 const (

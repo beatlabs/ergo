@@ -33,7 +33,7 @@ jobs:
         run: go mod verify
       - name: Run gofmt
         if: runner.os != 'Windows'
-        run: '[ -z $(gofmt -s -l .) ] || (gofmt -s -d . && exit 1)'
+        run: '[ -z $(gofmt -s -l `find . -name "*.go" | grep -v vendor`) ] || (gofmt -s -d `find . -name "*.go" | grep -v vendor` && exit 1)'
       - name: Run go vet
         run: go vet ./...
       - name: Run golangci-lint

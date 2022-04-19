@@ -1,7 +1,7 @@
 # ergo
 
 [![Test Status](https://github.com/beatlabs/ergo/workflows/tests/badge.svg)](https://github.com/beatlabs/ergo/actions?query=workflow%3Atests)
-[![Coverage Status](https://coveralls.io/repos/github/beatlabs/ergo/badge.svg?branch=main)](https://coveralls.io/github/beatlabs/ergo?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/beatlabs/ergo/badge.svg?branch=master)](https://coveralls.io/github/beatlabs/ergo?branch=master)
 
 Ergo (έργο), greek name for work, is a list of utilities for the daily release workflow.
 

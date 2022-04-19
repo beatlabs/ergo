@@ -10,7 +10,7 @@ import (
 type CLI struct {
 	MockConfirmation func() (bool, error)
 
-	sync.Mutex
+	mu                sync.Mutex
 	ConfirmationCalls int
 }
 
@@ -28,9 +28,9 @@ func (c *CLI) PrintLine(content ...interface{}) {
 
 // Confirmation is a mock implementation.
 func (c *CLI) Confirmation(actionText, cancellationMessage, successMessage string) (bool, error) {
-	c.Lock()
+	c.mu.Lock()
 	c.ConfirmationCalls++
-	c.Unlock()
+	c.mu.Unlock()
 	if c.MockConfirmation != nil {
 		return c.MockConfirmation()
 	}

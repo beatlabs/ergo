@@ -35,7 +35,7 @@ type Deploy interface {
 
 // Draft describes the draft process.
 type Draft interface {
-	Create(ctx context.Context, releaseName, tagName string) error
+	Create(ctx context.Context, releaseName, tagName string, skipConfirm bool) error
 }
 
 // Release struct contains all the fields which describe the release entity.

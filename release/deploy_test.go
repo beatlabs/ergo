@@ -29,7 +29,7 @@ func TestNewDeployShouldNotReturnNilObject(t *testing.T) {
 
 func TestDoShouldNotReturnErrorWithCorrectParameters(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	c := mock.CLI{}
+	c := &mock.CLI{}
 
 	host.MockLastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
@@ -76,7 +76,7 @@ func TestDoShouldReturnErrorOnConfirmation(t *testing.T) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
-	c := mock.CLI{MockConfirmation: func() (bool, error) {
+	c := &mock.CLI{MockConfirmation: func() (bool, error) {
 		return false, errors.New("")
 	}}
 
@@ -100,7 +100,7 @@ func TestDoShouldNotReturnErrorWhenNotConfirm(t *testing.T) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
-	c := mock.CLI{MockConfirmation: func() (bool, error) {
+	c := &mock.CLI{MockConfirmation: func() (bool, error) {
 		return false, nil
 	}}
 
@@ -124,7 +124,7 @@ func TestDoShouldReturnErrorWhenReleaseTimeIsPast(t *testing.T) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
-	c := mock.CLI{MockConfirmation: func() (bool, error) {
+	c := &mock.CLI{MockConfirmation: func() (bool, error) {
 		return true, nil
 	}}
 
@@ -148,7 +148,7 @@ func TestDoShouldReturnErrorWithBadOffsetTime(t *testing.T) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
-	c := mock.CLI{MockConfirmation: func() (bool, error) {
+	c := &mock.CLI{MockConfirmation: func() (bool, error) {
 		return true, nil
 	}}
 
@@ -181,7 +181,7 @@ func TestDoShouldReleaseBranches(t *testing.T) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
-	c := mock.CLI{MockConfirmation: func() (bool, error) {
+	c := &mock.CLI{MockConfirmation: func() (bool, error) {
 		return true, nil
 	}}
 

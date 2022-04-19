@@ -14,12 +14,13 @@ import (
 // defineDraftCommand defines the draft command.
 func defineDraftCommand() *cobra.Command {
 	var (
-		releaseName    string
-		releaseTag     string
-		branchesString string
-		minor          bool
-		major          bool
-		suffix         string
+		releaseName      string
+		releaseTag       string
+		branchesString   string
+		minor            bool
+		major            bool
+		suffix           string
+		skipConfirmation bool
 	)
 
 	draftCmd := &cobra.Command{
@@ -34,16 +35,17 @@ func defineDraftCommand() *cobra.Command {
 	draftCmd.Flags().BoolVar(&major, "major", false, "The major part of the tag.")
 	draftCmd.Flags().StringVar(&suffix, "suffix", "", "The suffix of the tag.")
 	draftCmd.Flags().StringVar(&branchesString, "branches", "", "Comma separated list of branches")
+	draftCmd.Flags().BoolVar(&skipConfirmation, "skip-confirmation", false, "Create the draft without asking for user confirmation.")
 
 	draftCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		return defineDraftCommandRun(releaseName, releaseTag, suffix, branchesString, major, minor)
+		return defineDraftCommandRun(releaseName, releaseTag, suffix, branchesString, major, minor, skipConfirmation)
 	}
 
 	return draftCmd
 }
 
 // defineDraftCommandRun defines the draft command run actions.
-func defineDraftCommandRun(releaseName, releaseTag, suffix, branchesString string, major, minor bool) error {
+func defineDraftCommandRun(releaseName, releaseTag, suffix, branchesString string, major, minor, skipConfirmation bool) error {
 	ctx := context.Background()
 
 	if branchesString != "" {
@@ -71,5 +73,5 @@ func defineDraftCommandRun(releaseName, releaseTag, suffix, branchesString strin
 		opts.ReleaseBodyPrefix,
 		opts.ReleaseBranches,
 		opts.ReleaseBodyBranches,
-	).Create(ctx, releaseName, version.Name)
+	).Create(ctx, releaseName, version.Name, skipConfirmation)
 }

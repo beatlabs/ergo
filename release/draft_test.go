@@ -43,13 +43,29 @@ func TestCreateShouldCreateDraft(t *testing.T) {
 		return nil
 	}
 
-	c := mock.CLI{}
 	releaseBranches := []string{"release-xx", "release-zz"}
 	releaseBodyBranches := map[string]string{"test1": "foo", "test2": "bar"}
 
-	r := NewDraft(c, host, "test", "", releaseBranches, releaseBodyBranches)
-	if r.Create(ctx, "test", "test") != nil {
-		t.Error("expected create response not to be nil.")
+	tests := map[string]struct {
+		skipConfirmation      bool
+		wantConfirmationCalls int
+	}{
+		"create draft asking for user confirmation": {skipConfirmation: false, wantConfirmationCalls: 1},
+		"create draft skipping user confirmation":   {skipConfirmation: true, wantConfirmationCalls: 0},
+	}
+	for testName, tt := range tests {
+		t.Run(testName, func(t *testing.T) {
+			c := &mock.CLI{}
+			r := NewDraft(c, host, "test", "", releaseBranches, releaseBodyBranches)
+
+			err := r.Create(ctx, "test", "test", tt.skipConfirmation)
+			if err != nil {
+				t.Errorf("Create returned error: %v", err)
+			}
+			if got, want := c.ConfirmationCalls, tt.wantConfirmationCalls; got != want {
+				t.Errorf("NewDraft().Create(skipConfirmation=%t) -> confirmation calls=%d, want: %d", tt.skipConfirmation, got, want)
+			}
+		})
 	}
 }
 
@@ -63,12 +79,12 @@ func TestCreateDiffCommitsShouldReturnError(t *testing.T) {
 		return nil
 	}
 
-	c := mock.CLI{}
+	c := &mock.CLI{}
 	releaseBranches := []string{"release-xx", "release-zz"}
 	releaseBodyBranches := map[string]string{"test1": "foo", "test2": "bar"}
 
 	r := NewDraft(c, host, "test", "", releaseBranches, releaseBodyBranches)
-	if r.Create(ctx, "test", "test") == nil {
+	if r.Create(ctx, "test", "test", false) == nil {
 		t.Error("expected create response to be nil.")
 	}
 }
@@ -83,12 +99,12 @@ func TestCreateCreateDraftReleaseShouldReturnError(t *testing.T) {
 		return errors.New("some error")
 	}
 
-	c := mock.CLI{}
+	c := &mock.CLI{}
 	releaseBranches := []string{"release-xx", "release-zz"}
 	releaseBodyBranches := map[string]string{"test1": "foo", "test2": "bar"}
 
 	r := NewDraft(c, host, "test", "", releaseBranches, releaseBodyBranches)
-	if r.Create(ctx, "test", "test") == nil {
+	if r.Create(ctx, "test", "test", false) == nil {
 		t.Error("expected create response to be nil.")
 	}
 }

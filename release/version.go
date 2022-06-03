@@ -32,8 +32,6 @@ func (v Version) NextVersion(ctx context.Context, inputVersion, suffix string, m
 	}
 
 	// Calculate the new version name according to remote tags names.
-	newVersion := semver.Version{}
-
 	lastRelease, err := v.host.LastRelease(ctx)
 	if err != nil {
 		return nil, err
@@ -44,7 +42,7 @@ func (v Version) NextVersion(ctx context.Context, inputVersion, suffix string, m
 		return nil, err
 	}
 
-	newVersion = increaseVersion(prevVersion, major, minor)
+	newVersion := increaseVersion(prevVersion, major, minor)
 
 	if suffix == "" {
 		return &ergo.Version{Name: newVersion.String(), SHA: baseBranchReference.SHA}, nil

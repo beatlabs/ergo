@@ -56,7 +56,6 @@ github.com/mitchellh/mapstructure
 github.com/pelletier/go-toml
 # github.com/pkg/errors v0.8.1
 ## explicit
-github.com/pkg/errors
 # github.com/rodaine/table v1.0.0
 ## explicit
 github.com/rodaine/table

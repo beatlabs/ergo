@@ -7,7 +7,6 @@ import (
 
 	"github.com/beatlabs/ergo"
 	"github.com/beatlabs/ergo/cli"
-	"github.com/pkg/errors"
 )
 
 // Draft is responsible for creating the draft release.
@@ -60,7 +59,7 @@ func (d *Draft) Create(ctx context.Context, releaseName, tagName string, skipCon
 		"The draft release is ready",
 	)
 	if err != nil {
-		return errors.Wrap(err, "confirmation dialog error")
+		return fmt.Errorf("confirmation dialog error: %w", err)
 	}
 
 	if !confirm {

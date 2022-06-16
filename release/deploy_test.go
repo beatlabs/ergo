@@ -1,7 +1,9 @@
 package release
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/beatlabs/ergo/mock"
@@ -42,7 +44,7 @@ func TestDoShouldNotReturnErrorWithCorrectParameters(t *testing.T) {
 		"",
 		"",
 		[]string{}, map[string]string{},
-	).Do(ctx, "10ms", "1ms", false)
+	).Do(ctx, "10ms", "1ms", false, false, false)
 
 	if err != nil {
 		t.Error("expected to not return error")
@@ -63,7 +65,7 @@ func TestDoShouldReturnErrorOnLastRelease(t *testing.T) {
 		"",
 		"",
 		[]string{}, map[string]string{},
-	).Do(ctx, "10ms", "1ms", false)
+	).Do(ctx, "10ms", "1ms", false, false, false)
 
 	if err == nil {
 		t.Error("expected to return error")
@@ -87,7 +89,7 @@ func TestDoShouldReturnErrorOnConfirmation(t *testing.T) {
 		"",
 		"",
 		[]string{}, map[string]string{},
-	).Do(ctx, "10ms", "1ms", false)
+	).Do(ctx, "10ms", "1ms", false, false, false)
 
 	if err == nil {
 		t.Error("expected to return error")
@@ -111,7 +113,7 @@ func TestDoShouldNotReturnErrorWhenNotConfirm(t *testing.T) {
 		"",
 		"",
 		[]string{}, map[string]string{},
-	).Do(ctx, "10ms", "1ms", false)
+	).Do(ctx, "10ms", "1ms", false, false, false)
 
 	if err != nil {
 		t.Error("expected not to return error")
@@ -135,7 +137,7 @@ func TestDoShouldReturnErrorWhenReleaseTimeIsPast(t *testing.T) {
 		"",
 		"",
 		[]string{}, map[string]string{},
-	).Do(ctx, "1ms", "-1ms", false)
+	).Do(ctx, "1ms", "-1ms", false, false, false)
 
 	if err == nil {
 		t.Error("expected to return error")
@@ -159,7 +161,7 @@ func TestDoShouldReturnErrorWithBadOffsetTime(t *testing.T) {
 		"",
 		"",
 		[]string{}, map[string]string{},
-	).Do(ctx, "1ms", "bad", false)
+	).Do(ctx, "1ms", "bad", false, false, false)
 
 	if err == nil {
 		t.Error("expected to return error")
@@ -193,9 +195,107 @@ func TestDoShouldReleaseBranches(t *testing.T) {
 		"replace",
 		[]string{"branch1", "branch2"},
 		map[string]string{},
-	).Do(ctx, "1ms", "1ms", false)
+	).Do(ctx, "1ms", "1ms", false, false, false)
 
 	if err != nil {
 		t.Error("expected to not return error")
+	}
+}
+
+func TestDoShouldDeployWhenSkippingUserConfirmation(t *testing.T) {
+	tests := map[string]struct {
+		skipConfirmation      bool
+		wantConfirmationCalls int
+	}{
+		"NewDeploy().Do asking for user confirmation": {skipConfirmation: false, wantConfirmationCalls: 1},
+		"NewDeploy().Do skipping user confirmation":   {skipConfirmation: true, wantConfirmationCalls: 0},
+	}
+	for testName, tt := range tests {
+		t.Run(testName, func(t *testing.T) {
+			c := &mock.CLI{}
+			host := &mock.RepositoryClient{
+				MockLastReleaseFn: func() (*ergo.Release, error) {
+					return &ergo.Release{TagName: "1.0.0"}, nil
+				},
+			}
+			err := NewDeploy(
+				c,
+				host,
+				"baseBranch",
+				"suffix",
+				"replace",
+				[]string{"branch1", "branch2"},
+				map[string]string{},
+			).Do(ctx, "1ms", "1ms", false, tt.skipConfirmation, false)
+			if err != nil {
+				t.Errorf("NewDeploy().Do(skipConfirmation=%t) returned error: %v", tt.skipConfirmation, err)
+			}
+			if got, want := c.ConfirmationCalls, tt.wantConfirmationCalls; got != want {
+				t.Errorf("NewDeploy().Do(skipConfirmation=%t) -> confirmation calls=%d, want: %d", tt.skipConfirmation, got, want)
+			}
+		})
+	}
+}
+
+func TestDoWithPublishDraftEnabledSuccess(t *testing.T) {
+	c := &mock.CLI{}
+	host := &mock.RepositoryClient{
+		MockLastReleaseFn: func() (*ergo.Release, error) {
+			return &ergo.Release{TagName: "1.0.0", Draft: true}, nil
+		},
+	}
+	err := NewDeploy(
+		c,
+		host,
+		"baseBranch",
+		"suffix",
+		"replace",
+		[]string{"branch1", "branch2"},
+		map[string]string{},
+	).Do(ctx, "1ms", "1ms", false, false, true)
+	if err != nil {
+		t.Errorf("NewDeploy().Do(publishDraft=true) returned error: %v", err)
+	}
+}
+
+func TestDoWithPublishDraftEnabledError(t *testing.T) {
+	tests := map[string]struct {
+		LastReleaseFn    func() (*ergo.Release, error)
+		PublishReleaseFn func(ctx context.Context, releaseID int64) error
+	}{
+		"last release is not a draft": {
+			LastReleaseFn: func() (*ergo.Release, error) {
+				return &ergo.Release{TagName: "1.0.0", Draft: false}, nil
+			},
+		},
+		"publish release returns error": {
+			LastReleaseFn: func() (*ergo.Release, error) {
+				return &ergo.Release{TagName: "1.0.0", Draft: true}, nil
+			},
+			PublishReleaseFn: func(ctx context.Context, releaseID int64) error {
+				return fmt.Errorf("something went wrong")
+			},
+		},
+	}
+	for testName, tt := range tests {
+		t.Run(testName, func(t *testing.T) {
+			c := &mock.CLI{}
+			host := &mock.RepositoryClient{
+				MockLastReleaseFn:    tt.LastReleaseFn,
+				MockPublishReleaseFn: tt.PublishReleaseFn,
+			}
+			err := NewDeploy(
+				c,
+				host,
+				"baseBranch",
+				"suffix",
+				"replace",
+				[]string{"branch1", "branch2"},
+				map[string]string{},
+			).Do(ctx, "1ms", "1ms", false, false, true)
+			if err == nil {
+				t.Errorf("NewDeploy().Do(publishDraft=true) when %q should return error", testName)
+			}
+		})
 	}
 }

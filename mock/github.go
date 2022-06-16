@@ -11,6 +11,7 @@ type RepositoryClient struct {
 	MockCreateDraftReleaseFn  func() error
 	MockLastReleaseFn         func() (*ergo.Release, error)
 	MockEditReleaseFn         func() (*ergo.Release, error)
+	MockPublishReleaseFn      func(ctx context.Context, releaseID int64) error
 	MockCompareBranchFn       func() (*ergo.StatusReport, error)
 	MockDiffCommitsFn         func() ([]*ergo.StatusReport, error)
 	MockCreateTagFn           func() (*ergo.Tag, error)
@@ -42,6 +43,14 @@ func (r *RepositoryClient) EditRelease(ctx context.Context, release *ergo.Releas
 		return r.MockEditReleaseFn()
 	}
 	return nil, nil
+}
+
+// PublishRelease invokes the  mock implementation.
+func (r *RepositoryClient) PublishRelease(ctx context.Context, releaseID int64) error {
+	if r.MockPublishReleaseFn != nil {
+		return r.MockPublishReleaseFn(ctx, releaseID)
+	}
+	return nil
 }
 
 // CompareBranch is a mock implementation.

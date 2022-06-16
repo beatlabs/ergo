@@ -16,7 +16,6 @@ type RepositoryClient struct {
 	organization string
 	repo         string
 	client       *github.Client
-	curRelease   *github.RepositoryRelease
 }
 
 // NewGithubClient set up a github client.
@@ -56,8 +55,6 @@ func (gc *RepositoryClient) CreateDraftRelease(ctx context.Context, name, tagNam
 		githubRelease,
 	)
 
-	gc.curRelease = githubRelease
-
 	return err
 }
 
@@ -65,44 +62,52 @@ func (gc *RepositoryClient) CreateDraftRelease(ctx context.Context, name, tagNam
 func (gc *RepositoryClient) LastRelease(ctx context.Context) (*ergo.Release, error) {
 	githubRelease, _, err := gc.client.Repositories.GetLatestRelease(
 		ctx, gc.organization, gc.repo)
-
-	errResponse, ok := err.(*github.ErrorResponse)
-
-	errHasResponse := ok
-	if errHasResponse && errResponse.Response.StatusCode == http.StatusNotFound {
-		return nil, nil
-	}
-
 	if err != nil {
+		var errorResponse *github.ErrorResponse
+		if errors.As(err, &errorResponse) && errorResponse.Response.StatusCode == http.StatusNotFound {
+			return nil, fmt.Errorf("latest release not found: %w", errorResponse)
+		}
 		return nil, err
 	}
-
-	gc.curRelease = githubRelease
 
 	return &ergo.Release{
 		ID:         *githubRelease.ID,
 		Body:       *githubRelease.Body,
 		TagName:    githubRelease.GetTagName(),
 		ReleaseURL: githubRelease.GetHTMLURL(),
+		Draft:      githubRelease.GetDraft(),
 	}, nil
 }
 
 // EditRelease allows to edit a repository release.
 func (gc *RepositoryClient) EditRelease(ctx context.Context, release *ergo.Release) (*ergo.Release, error) {
-
-	if gc.curRelease == nil {
-		return nil, errors.New("curRelease is empty")
+	if release == nil {
+		return nil, errors.New("nothing to release: input release is nil")
+	}
+	releasePayload := &github.RepositoryRelease{
+		Body: &release.Body,
 	}
 
-	githubRelease := gc.curRelease
-	githubRelease.Body = &release.Body
+	githubRelease, _, err := gc.client.Repositories.EditRelease(ctx, gc.organization, gc.repo, release.ID, releasePayload)
+	if err != nil {
+		return nil, err
+	}
 
-	githubRelease, _, err := gc.client.Repositories.EditRelease(
-		ctx, gc.organization, gc.repo, release.ID, githubRelease)
+	release.Body = githubRelease.GetBody()
 
-	release.Body = *githubRelease.Body
+	return release, nil
+}
 
-	return release, err
+// PublishRelease changes the draft flag of a repo release to false.
+func (gc *RepositoryClient) PublishRelease(ctx context.Context, releaseID int64) error {
+	editReleasePayload := &github.RepositoryRelease{
+		Draft: github.Bool(false),
+	}
+	_, _, err := gc.client.Repositories.EditRelease(ctx, gc.organization, gc.repo, releaseID, editReleasePayload)
+	if err != nil {
+		return fmt.Errorf("editing draft flag of release (ID=%d): %w", releaseID, err)
+	}
+	return nil
 }
 
 // GetRef branch reference object given the branch name.

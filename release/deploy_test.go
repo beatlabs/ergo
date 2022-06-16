@@ -33,7 +33,7 @@ func TestDoShouldNotReturnErrorWithCorrectParameters(t *testing.T) {
 	host := &mock.RepositoryClient{}
 	c := &mock.CLI{}
 
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
@@ -54,7 +54,7 @@ func TestDoShouldNotReturnErrorWithCorrectParameters(t *testing.T) {
 func TestDoShouldReturnErrorOnLastRelease(t *testing.T) {
 	host := &mock.RepositoryClient{}
 
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return nil, errors.New("")
 	}
 
@@ -74,11 +74,11 @@ func TestDoShouldReturnErrorOnLastRelease(t *testing.T) {
 
 func TestDoShouldReturnErrorOnConfirmation(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
-	c := &mock.CLI{MockConfirmation: func() (bool, error) {
+	c := &mock.CLI{ConfirmationFn: func() (bool, error) {
 		return false, errors.New("")
 	}}
 
@@ -98,11 +98,11 @@ func TestDoShouldReturnErrorOnConfirmation(t *testing.T) {
 
 func TestDoShouldNotReturnErrorWhenNotConfirm(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
-	c := &mock.CLI{MockConfirmation: func() (bool, error) {
+	c := &mock.CLI{ConfirmationFn: func() (bool, error) {
 		return false, nil
 	}}
 
@@ -122,11 +122,11 @@ func TestDoShouldNotReturnErrorWhenNotConfirm(t *testing.T) {
 
 func TestDoShouldReturnErrorWhenReleaseTimeIsPast(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
-	c := &mock.CLI{MockConfirmation: func() (bool, error) {
+	c := &mock.CLI{ConfirmationFn: func() (bool, error) {
 		return true, nil
 	}}
 
@@ -146,11 +146,11 @@ func TestDoShouldReturnErrorWhenReleaseTimeIsPast(t *testing.T) {
 
 func TestDoShouldReturnErrorWithBadOffsetTime(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
-	c := &mock.CLI{MockConfirmation: func() (bool, error) {
+	c := &mock.CLI{ConfirmationFn: func() (bool, error) {
 		return true, nil
 	}}
 
@@ -170,20 +170,20 @@ func TestDoShouldReturnErrorWithBadOffsetTime(t *testing.T) {
 
 func TestDoShouldReleaseBranches(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
-	host.MockUpdateBranchFromTagFn = func() error {
+	host.UpdateBranchFromTagFn = func() error {
 		return nil
 	}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
-	host.MockEditReleaseFn = func() (*ergo.Release, error) {
+	host.EditReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
-	c := &mock.CLI{MockConfirmation: func() (bool, error) {
+	c := &mock.CLI{ConfirmationFn: func() (bool, error) {
 		return true, nil
 	}}
 
@@ -214,7 +214,7 @@ func TestDoShouldDeployWhenSkippingUserConfirmation(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			c := &mock.CLI{}
 			host := &mock.RepositoryClient{
-				MockLastReleaseFn: func() (*ergo.Release, error) {
+				LastReleaseFn: func() (*ergo.Release, error) {
 					return &ergo.Release{TagName: "1.0.0"}, nil
 				},
 			}
@@ -240,7 +240,7 @@ func TestDoShouldDeployWhenSkippingUserConfirmation(t *testing.T) {
 func TestDoWithPublishDraftEnabledSuccess(t *testing.T) {
 	c := &mock.CLI{}
 	host := &mock.RepositoryClient{
-		MockLastReleaseFn: func() (*ergo.Release, error) {
+		LastReleaseFn: func() (*ergo.Release, error) {
 			return &ergo.Release{TagName: "1.0.0", Draft: true}, nil
 		},
 	}
@@ -281,8 +281,8 @@ func TestDoWithPublishDraftEnabledError(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			c := &mock.CLI{}
 			host := &mock.RepositoryClient{
-				MockLastReleaseFn:    tt.LastReleaseFn,
-				MockPublishReleaseFn: tt.PublishReleaseFn,
+				LastReleaseFn:    tt.LastReleaseFn,
+				PublishReleaseFn: tt.PublishReleaseFn,
 			}
 			err := NewDeploy(
 				c,

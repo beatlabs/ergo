@@ -23,7 +23,7 @@ func TestNewDraftShouldNotReturnNilObject(t *testing.T) {
 // Create is responsible to create a new draft release.
 func TestCreateShouldCreateDraft(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockDiffCommitsFn = func() ([]*ergo.StatusReport, error) {
+	host.DiffCommitsFn = func() ([]*ergo.StatusReport, error) {
 		statusRep1 := &ergo.StatusReport{
 			Branch:     "release-xx",
 			BaseBranch: "master",
@@ -39,7 +39,7 @@ func TestCreateShouldCreateDraft(t *testing.T) {
 
 		return []*ergo.StatusReport{statusRep1, statusRep2}, nil
 	}
-	host.MockCreateDraftReleaseFn = func() error {
+	host.CreateDraftReleaseFn = func() error {
 		return nil
 	}
 
@@ -72,10 +72,10 @@ func TestCreateShouldCreateDraft(t *testing.T) {
 // Create is responsible to create a new draft release.
 func TestCreateDiffCommitsShouldReturnError(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockDiffCommitsFn = func() ([]*ergo.StatusReport, error) {
+	host.DiffCommitsFn = func() ([]*ergo.StatusReport, error) {
 		return nil, errors.New("some error")
 	}
-	host.MockCreateDraftReleaseFn = func() error {
+	host.CreateDraftReleaseFn = func() error {
 		return nil
 	}
 
@@ -92,10 +92,10 @@ func TestCreateDiffCommitsShouldReturnError(t *testing.T) {
 // Create is responsible to create a new draft release.
 func TestCreateCreateDraftReleaseShouldReturnError(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockDiffCommitsFn = func() ([]*ergo.StatusReport, error) {
+	host.DiffCommitsFn = func() ([]*ergo.StatusReport, error) {
 		return []*ergo.StatusReport{}, nil
 	}
-	host.MockCreateDraftReleaseFn = func() error {
+	host.CreateDraftReleaseFn = func() error {
 		return errors.New("some error")
 	}
 

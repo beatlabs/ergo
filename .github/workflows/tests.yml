@@ -2,10 +2,10 @@ name: tests
 on:
   push:
     branches:
-    - master
+      - master
+    tags-ignore:
+      - '**'
   pull_request:
-  tags-ignore:
-    - '**'
 jobs:
   test:
     strategy:

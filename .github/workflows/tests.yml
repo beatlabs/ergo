@@ -1,5 +1,11 @@
-on: [push, pull_request]
 name: tests
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+  tags-ignore:
+    - '**'
 jobs:
   test:
     strategy:

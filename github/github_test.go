@@ -212,7 +212,8 @@ func TestLastReleaseShouldReturnWrappedErrorForCodeStatusNotFound(t *testing.T) 
 		t.Fatalf("LastRelease(GitHub API responds with 404) returned wrapped error of type %T, want: %T,", err, errorResponse)
 	}
 	if got, want := errorResponse.Response.StatusCode, http.StatusNotFound; got != want {
-		t.Errorf("LastRelease(GitHub API responds with 404) returned wrapped error of type %T with StatusCode %d, want: %d", errorResponse, got, want)
+		t.Errorf("LastRelease(GitHub API responds with 404) returned wrapped error of type %T with StatusCode %d, want: %d",
+			errorResponse, got, want)
 	}
 }
 

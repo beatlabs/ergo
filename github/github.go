@@ -48,7 +48,7 @@ func (gc *RepositoryClient) CreateDraftRelease(ctx context.Context, name, tagNam
 		TargetCommitish: &targetBranch,
 	}
 
-	githubRelease, _, err := gc.client.Repositories.CreateRelease(
+	_, _, err := gc.client.Repositories.CreateRelease(
 		ctx,
 		gc.organization,
 		gc.repo,

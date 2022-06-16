@@ -42,7 +42,14 @@ func NewDeploy(
 }
 
 // Do is responsible for deploying the latest release.
-func (r *Deploy) Do(ctx context.Context, releaseIntervalInput, releaseOffsetInput string, allowForcePush, skipConfirm, publishDraft bool) error {
+func (r *Deploy) Do(
+	ctx context.Context,
+	releaseIntervalInput string,
+	releaseOffsetInput string,
+	allowForcePush bool,
+	skipConfirm bool,
+	publishDraft bool,
+) error {
 	release, err := r.host.LastRelease(ctx)
 	if err != nil {
 		return err
@@ -52,7 +59,7 @@ func (r *Deploy) Do(ctx context.Context, releaseIntervalInput, releaseOffsetInpu
 		if !release.Draft {
 			return fmt.Errorf("latest release found (ID=%d, URL=%q) is not a draft", release.ID, release.ReleaseURL)
 		}
-		if err := r.host.PublishRelease(ctx, release.ID); err != nil {
+		if err = r.host.PublishRelease(ctx, release.ID); err != nil {
 			return fmt.Errorf("publishing latest found release (ID=%d, URL=%q): %w", release.ID, release.ReleaseURL, err)
 		}
 	}
@@ -93,7 +100,13 @@ func (r *Deploy) Do(ctx context.Context, releaseIntervalInput, releaseOffsetInpu
 	return r.deployToAllReleaseBranches(ctx, intervalDuration, releaseTime, release, allowForcePush)
 }
 
-func (r *Deploy) deployToAllReleaseBranches(ctx context.Context, intervalDuration time.Duration, releaseTime time.Time, release *ergo.Release, allowForcePush bool) error {
+func (r *Deploy) deployToAllReleaseBranches(
+	ctx context.Context,
+	intervalDuration time.Duration,
+	releaseTime time.Time,
+	release *ergo.Release,
+	allowForcePush bool,
+) error {
 	for i, branch := range r.releaseBranches {
 		if i != 0 {
 			time.Sleep(intervalDuration)

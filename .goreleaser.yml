@@ -16,8 +16,11 @@ builds:
       - windows
       - darwin
     no_unique_dist_dir: true
-    binary: "ergo-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    binary: "{{.ProjectName}}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
 archives:
+  - format_overrides:
+    - goos: windows
+      format: zip
   - replacements:
       darwin: Darwin
       linux: Linux

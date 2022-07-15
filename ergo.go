@@ -10,6 +10,7 @@ type Host interface {
 	CreateDraftRelease(ctx context.Context, name, tagName, releaseBody, targetBranch string) error
 	LastRelease(ctx context.Context) (*Release, error)
 	EditRelease(ctx context.Context, release *Release) (*Release, error)
+	PublishRelease(ctx context.Context, releaseID int64) error
 	CompareBranch(ctx context.Context, baseBranch, branch string) (*StatusReport, error)
 	DiffCommits(ctx context.Context, releaseBranches []string, baseBranch string) ([]*StatusReport, error)
 	CreateTag(ctx context.Context, versionName, sha, m string) (*Tag, error)
@@ -44,6 +45,7 @@ type Release struct {
 	Body       string
 	TagName    string
 	ReleaseURL string
+	Draft      bool
 }
 
 // StatusReport struct is responsible to keep the information about current status.

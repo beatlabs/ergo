@@ -2,7 +2,9 @@ package github
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -27,6 +29,23 @@ func setup() (client *github.Client, mux *http.ServeMux, teardown func()) {
 	client.UploadURL = clientURL
 
 	return client, mux, server.Close
+}
+
+func testBody(t *testing.T, r *http.Request, want string) {
+	t.Helper()
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		t.Fatalf("Error reading request body: %v", err)
+	}
+	if got := string(b); got != want {
+		t.Errorf("request body\nhave: %q\nwant: %q", got, want)
+	}
+}
+
+func testMethod(t *testing.T, r *http.Request, want string) {
+	if want != r.Method {
+		t.Errorf("Request method = %v, want %v", r.Method, want)
+	}
 }
 
 func TestNewGithubClient(t *testing.T) {
@@ -176,7 +195,7 @@ func TestLastReleaseShouldReturnTheLastRelease(t *testing.T) {
 	}
 }
 
-func TestLastReleaseShouldNotReturnErrorForInvalidStatusCode(t *testing.T) {
+func TestLastReleaseShouldReturnWrappedErrorForCodeStatusNotFound(t *testing.T) {
 	ctx := context.Background()
 	client, mux, tearDown := setup()
 	defer tearDown()
@@ -187,12 +206,14 @@ func TestLastReleaseShouldNotReturnErrorForInvalidStatusCode(t *testing.T) {
 
 	repClient := NewRepositoryClient("o", "r", client)
 
-	got, err := repClient.LastRelease(ctx)
-	if err != nil {
-		t.Error("Should not return error for 404 status code")
+	_, err := repClient.LastRelease(ctx)
+	var errorResponse *github.ErrorResponse
+	if !errors.As(err, &errorResponse) {
+		t.Fatalf("LastRelease(GitHub API responds with 404) returned wrapped error of type %T, want: %T,", err, errorResponse)
 	}
-	if got != nil {
-		t.Error("Release should be nil")
+	if got, want := errorResponse.Response.StatusCode, http.StatusNotFound; got != want {
+		t.Errorf("LastRelease(GitHub API responds with 404) returned wrapped error of type %T with StatusCode %d, want: %d",
+			errorResponse, got, want)
 	}
 }
 
@@ -274,19 +295,75 @@ func TestEditReleaseShouldEditTheRelease(t *testing.T) {
 	}
 }
 
-func TestEditReleaseShouldReturnErrorForNilCurrentRelease(t *testing.T) {
+func TestEditReleaseShouldReturnErrorForNilInputRelease(t *testing.T) {
 	ctx := context.Background()
 	client, _, tearDown := setup()
 	defer tearDown()
 
 	repClient := NewRepositoryClient("o", "r", client)
 
-	rel, err := repClient.EditRelease(ctx, nil)
+	_, err := repClient.EditRelease(ctx, nil)
 	if err == nil {
-		t.Fatalf("Should return eror ")
+		t.Fatalf("EditRelease should return error when input release is nil")
 	}
-	if rel != nil {
-		t.Errorf("got = %v; want nil", rel)
+}
+
+func TestEditReleaseShouldReturnErrorOnGitHubAPIError(t *testing.T) {
+	ctx := context.Background()
+	client, mux, tearDown := setup()
+	defer tearDown()
+
+	mux.HandleFunc("/repos/o/r/releases/12", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	})
+
+	repClient := NewRepositoryClient("o", "r", client)
+
+	editRelease := &ergo.Release{
+		ID:         12,
+		Body:       "release_body",
+		TagName:    "tag_name",
+		ReleaseURL: "release_url",
+	}
+	_, err := repClient.EditRelease(ctx, editRelease)
+	if err == nil {
+		t.Errorf("EditRelease should return error when GitHub API sends code 503")
+	}
+}
+
+func TestPublishReleaseSuccess(t *testing.T) {
+	client, mux, tearDown := setup()
+	defer tearDown()
+
+	mux.HandleFunc("/repos/o/r/releases/12", func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, "PATCH")
+		testBody(t, r, `{"draft":false}`+"\n")
+		fmt.Fprintf(w, `{}`)
+	})
+
+	repoClient := NewRepositoryClient("o", "r", client)
+
+	ctx := context.Background()
+	if err := repoClient.PublishRelease(ctx, 12); err != nil {
+		t.Errorf("PublishRelease returned error: %v", err)
+	}
+}
+
+func TestPublishReleaseError(t *testing.T) {
+	client, mux, tearDown := setup()
+	defer tearDown()
+
+	mux.HandleFunc("/repos/o/r/releases/12", func(w http.ResponseWriter, r *http.Request) {
+		testMethod(t, r, "PATCH")
+		testBody(t, r, `{"draft":false}`+"\n")
+		w.WriteHeader(http.StatusServiceUnavailable)
+	})
+
+	repoClient := NewRepositoryClient("o", "r", client)
+
+	ctx := context.Background()
+	if err := repoClient.PublishRelease(ctx, 12); err == nil {
+		t.Error("PublishRelease expected to return error")
 	}
 }
 

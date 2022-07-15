@@ -17,10 +17,10 @@ func TestNewVersionShouldNotReturnNilObject(t *testing.T) {
 
 func TestNextVersionShouldReturnTheNextVersionWithDefaultParameters(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha", Ref: "ref"}, nil
 	}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
@@ -42,13 +42,13 @@ func TestNextVersionShouldReturnTheNextVersionWithDefaultParameters(t *testing.T
 
 func TestNextVersionShouldReturnTheNextVersionWithSuffixSameSHA(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha", Ref: "ref"}, nil
 	}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
-	host.MockGetRefFromTagFn = func() (*ergo.Reference, error) {
+	host.GetRefFromTagFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha", Ref: "ref"}, nil
 	}
 
@@ -70,13 +70,13 @@ func TestNextVersionShouldReturnTheNextVersionWithSuffixSameSHA(t *testing.T) {
 
 func TestNextVersionShouldReturnTheNextVersionWithSuffixDifferentSHA(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha1", Ref: "ref"}, nil
 	}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
-	host.MockGetRefFromTagFn = func() (*ergo.Reference, error) {
+	host.GetRefFromTagFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha2", Ref: "ref"}, nil
 	}
 
@@ -98,7 +98,7 @@ func TestNextVersionShouldReturnTheNextVersionWithSuffixDifferentSHA(t *testing.
 
 func TestNextVersionShouldReturnTheNextVersionWithInputVersion(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha", Ref: "ref"}, nil
 	}
 
@@ -120,7 +120,7 @@ func TestNextVersionShouldReturnTheNextVersionWithInputVersion(t *testing.T) {
 
 func TestNextVersionShouldReturnTheNextVersionWithInputVersionAndSuffix(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha", Ref: "ref"}, nil
 	}
 
@@ -142,10 +142,10 @@ func TestNextVersionShouldReturnTheNextVersionWithInputVersionAndSuffix(t *testi
 
 func TestNextVersionShouldReturnTheNextVersionWithCustomLastReleaseVersion(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha", Ref: "ref"}, nil
 	}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "v13.0.5.1-custom"}, nil
 	}
 
@@ -167,10 +167,10 @@ func TestNextVersionShouldReturnTheNextVersionWithCustomLastReleaseVersion(t *te
 
 func TestNextVersionShouldReturnTheNextVersionWithMinorFlag(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha", Ref: "ref"}, nil
 	}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
@@ -192,10 +192,10 @@ func TestNextVersionShouldReturnTheNextVersionWithMinorFlag(t *testing.T) {
 
 func TestNextVersionShouldReturnTheNextVersionWithMajorFlag(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha", Ref: "ref"}, nil
 	}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
@@ -217,13 +217,13 @@ func TestNextVersionShouldReturnTheNextVersionWithMajorFlag(t *testing.T) {
 
 func TestNextVersionShouldReturnTheNextVersionWithSuffixAndMajor(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha1", Ref: "ref"}, nil
 	}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
-	host.MockGetRefFromTagFn = func() (*ergo.Reference, error) {
+	host.GetRefFromTagFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha2", Ref: "ref"}, nil
 	}
 
@@ -245,10 +245,10 @@ func TestNextVersionShouldReturnTheNextVersionWithSuffixAndMajor(t *testing.T) {
 
 func TestNextVersionShouldReturnTheNextVersionWithMajorAndMinor(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha", Ref: "ref"}, nil
 	}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
 
@@ -270,10 +270,10 @@ func TestNextVersionShouldReturnTheNextVersionWithMajorAndMinor(t *testing.T) {
 
 func TestNextVersionShouldReturnDefaultVersionWhenNoReleases(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha", Ref: "ref"}, nil
 	}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return nil, nil
 	}
 
@@ -295,7 +295,7 @@ func TestNextVersionShouldReturnDefaultVersionWhenNoReleases(t *testing.T) {
 
 func TestNextVersionShouldReturnErrorOnGetRef(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return nil, errors.New("")
 	}
 
@@ -308,10 +308,10 @@ func TestNextVersionShouldReturnErrorOnGetRef(t *testing.T) {
 
 func TestNextVersionShouldReturnErrorOnLastRelease(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{}, nil
 	}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return nil, errors.New("")
 	}
 
@@ -324,10 +324,10 @@ func TestNextVersionShouldReturnErrorOnLastRelease(t *testing.T) {
 
 func TestNextVersionShouldReturnDefaultVersionOnWrongFormat(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha"}, nil
 	}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "wrong"}, nil
 	}
 
@@ -349,13 +349,13 @@ func TestNextVersionShouldReturnDefaultVersionOnWrongFormat(t *testing.T) {
 
 func TestNextVersionShouldReturnErrorOnLastReleaseWithSuffix(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFn = func() (*ergo.Reference, error) {
+	host.GetRefFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha", Ref: "ref"}, nil
 	}
-	host.MockLastReleaseFn = func() (*ergo.Release, error) {
+	host.LastReleaseFn = func() (*ergo.Release, error) {
 		return &ergo.Release{TagName: "1.0.0"}, nil
 	}
-	host.MockGetRefFromTagFn = func() (*ergo.Reference, error) {
+	host.GetRefFromTagFn = func() (*ergo.Reference, error) {
 		return nil, errors.New("")
 	}
 

@@ -7,7 +7,6 @@ Ergo makes primarily use of the following OSS projects:
 * [github](https://github.com/google/go-github)
 * [go-version](https://github.com/hashicorp/go-version)
 * [go-homedir](https://github.com/mitchellh/go-homedir)
-* [errors](https://github.com/pkg/errors)
 * [table](https://github.com/rodaine/table)
 * [cobra](https://github.com/spf13/cobra)
 * [viper](https://github.com/spf13/viper)

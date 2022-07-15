@@ -8,31 +8,28 @@ import (
 
 // CLI is a mock implementation.
 type CLI struct {
-	MockConfirmation func() (bool, error)
+	ConfirmationFn func() (bool, error)
 
 	mu                sync.Mutex
 	ConfirmationCalls int
 }
 
 // PrintTable is a mock implementation.
-func (c *CLI) PrintTable(header []string, values [][]string) {
-}
+func (c *CLI) PrintTable(header []string, values [][]string) {}
 
 // PrintColorizedLine is a mock implementation.
-func (c *CLI) PrintColorizedLine(title, content string, level ergo.MessageLevel) {
-}
+func (c *CLI) PrintColorizedLine(title, content string, level ergo.MessageLevel) {}
 
 // PrintLine is a mock implementation.
-func (c *CLI) PrintLine(content ...interface{}) {
-}
+func (c *CLI) PrintLine(content ...interface{}) {}
 
 // Confirmation is a mock implementation.
 func (c *CLI) Confirmation(actionText, cancellationMessage, successMessage string) (bool, error) {
 	c.mu.Lock()
 	c.ConfirmationCalls++
 	c.mu.Unlock()
-	if c.MockConfirmation != nil {
-		return c.MockConfirmation()
+	if c.ConfirmationFn != nil {
+		return c.ConfirmationFn()
 	}
 	return true, nil
 }

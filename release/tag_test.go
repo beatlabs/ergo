@@ -26,7 +26,7 @@ func TestCreateShouldCreateTag(t *testing.T) {
 
 	want := ergo.Tag{Name: versionName}
 
-	host.MockCreateTagFn = func() (*ergo.Tag, error) {
+	host.CreateTagFn = func() (*ergo.Tag, error) {
 		return &ergo.Tag{Name: versionName}, nil
 	}
 
@@ -44,7 +44,7 @@ func TestCreateShouldReturnErrorForDifferentVersionNames(t *testing.T) {
 	host := &mock.RepositoryClient{}
 	want := ergo.Tag{Name: "1.0.0"}
 
-	host.MockCreateTagFn = func() (*ergo.Tag, error) {
+	host.CreateTagFn = func() (*ergo.Tag, error) {
 		return &ergo.Tag{Name: "2.0.0"}, nil
 	}
 
@@ -60,7 +60,7 @@ func TestCreateShouldReturnErrorForDifferentVersionNames(t *testing.T) {
 
 func TestCreateShouldReturnError(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockCreateTagFn = func() (*ergo.Tag, error) {
+	host.CreateTagFn = func() (*ergo.Tag, error) {
 		return nil, errors.New("")
 	}
 
@@ -73,7 +73,7 @@ func TestCreateShouldReturnError(t *testing.T) {
 func TestExistsTagNameShouldReturnTrue(t *testing.T) {
 	host := &mock.RepositoryClient{}
 
-	host.MockGetRefFromTagFn = func() (*ergo.Reference, error) {
+	host.GetRefFromTagFn = func() (*ergo.Reference, error) {
 		return &ergo.Reference{SHA: "sha", Ref: "ref"}, nil
 	}
 
@@ -102,7 +102,7 @@ func TestExistsTagNameShouldReturnFalse(t *testing.T) {
 
 func TestExistsTagNameShouldReturnError(t *testing.T) {
 	host := &mock.RepositoryClient{}
-	host.MockGetRefFromTagFn = func() (*ergo.Reference, error) {
+	host.GetRefFromTagFn = func() (*ergo.Reference, error) {
 		return nil, errors.New("")
 	}
 

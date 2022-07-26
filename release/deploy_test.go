@@ -299,12 +299,12 @@ func TestNonLinearIntervals(t *testing.T) {
 		{
 			name:      "multiple branches, nonlinear intervals",
 			branches:  []string{"b1", "b2", "b3", "b4"},
-			intervals: "10ms 5ms 1ms 1ms",
+			intervals: "10ms,5ms,1ms,1ms",
 		},
 		{
 			name:      "multiple branches, fewer intervals",
 			branches:  []string{"b1", "b2", "b3", "b4"},
-			intervals: "10ms 5ms",
+			intervals: "10ms,5ms",
 		},
 	}
 
@@ -363,7 +363,7 @@ func TestNonLinearIntervalHandling(t *testing.T) {
 		{
 			name:      "multiple branches, nonlinear intervals",
 			branches:  []string{"branch1", "branch2", "branch3", "branch4"},
-			intervals: "10m 5m 1m",
+			intervals: "10m,5m,1m",
 			expectedPrintRows: [][]string{
 				{"branch1", ts(time.Now())},
 				{"branch2", ts(time.Now().Add(10 * time.Minute))},
@@ -374,7 +374,7 @@ func TestNonLinearIntervalHandling(t *testing.T) {
 		{
 			name:      "multiple branches, fewer intervals",
 			branches:  []string{"branch1", "branch2", "branch3", "branch4"},
-			intervals: "10m 5m",
+			intervals: "10m,5m",
 			expectedPrintRows: [][]string{
 				{"branch1", ts(time.Now())},
 				{"branch2", ts(time.Now().Add(10 * time.Minute))},

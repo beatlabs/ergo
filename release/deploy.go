@@ -130,7 +130,7 @@ func (r *Deploy) deployToAllReleaseBranches(
 
 // calculateReleaseTime calculate from string the interval between the releases.
 func (r *Deploy) calculateReleaseTime(releaseInterval, releaseOffset string) ([]time.Duration, *time.Time, error) {
-	intervalStrings := strings.Split(releaseInterval, " ")
+	intervalStrings := strings.Split(releaseInterval, ",")
 	intervalDurations := make([]time.Duration, 0, len(intervalStrings))
 	for _, interval := range intervalStrings {
 		intervalDuration, err := time.ParseDuration(interval)

@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
-	"github.com/beatlabs/ergo/mock"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/beatlabs/ergo"
 	"github.com/beatlabs/ergo/cli"
+	"github.com/beatlabs/ergo/mock"
 )
 
 func TestNewDeployShouldNotReturnNilObject(t *testing.T) {
@@ -275,6 +276,131 @@ func TestDoWithPublishDraftEnabledError(t *testing.T) {
 				map[string]string{},
 			).Do(ctx, "1ms", "1ms", false, false, true)
 			assert.Errorf(t, err, "NewDeploy().Do(publishDraft=true) when %q should return error", testName)
+		})
+	}
+}
+
+func TestNonLinearIntervals(t *testing.T) {
+	tests := []struct {
+		name      string
+		branches  []string
+		intervals string
+	}{
+		{
+			name:      "single branch, single interval",
+			branches:  []string{"b1"},
+			intervals: "1ms",
+		},
+		{
+			name:      "multiple branches, single interval",
+			branches:  []string{"b1", "b2", "b3", "b4"},
+			intervals: "1ms",
+		},
+		{
+			name:      "multiple branches, nonlinear intervals",
+			branches:  []string{"b1", "b2", "b3", "b4"},
+			intervals: "10ms 5ms 1ms 1ms",
+		},
+		{
+			name:      "multiple branches, fewer intervals",
+			branches:  []string{"b1", "b2", "b3", "b4"},
+			intervals: "10ms 5ms",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			host := &mock.RepositoryClient{}
+			c := &mock.CLI{}
+
+			host.LastReleaseFn = func() (*ergo.Release, error) {
+				return &ergo.Release{TagName: "1.0.0"}, nil
+			}
+
+			err := NewDeploy(
+				c,
+				host,
+				"baseBranch",
+				"",
+				"",
+				test.branches, map[string]string{},
+			).Do(ctx, test.intervals, "1ms", false, false, false)
+
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestNonLinearIntervalHandling(t *testing.T) {
+	ts := func(t time.Time) string {
+		return t.Format("15:04 MST")
+	}
+	tests := []struct {
+		name              string
+		branches          []string
+		intervals         string
+		expectedPrintRows [][]string
+	}{
+		{
+			name:      "single branch, single interval",
+			branches:  []string{"branch1"},
+			intervals: "1m",
+			expectedPrintRows: [][]string{
+				{"branch1", ts(time.Now())},
+			},
+		},
+		{
+			name:      "multiple branches, single interval",
+			branches:  []string{"branch1", "branch2", "branch3", "branch4"},
+			intervals: "1m",
+			expectedPrintRows: [][]string{
+				{"branch1", ts(time.Now())},
+				{"branch2", ts(time.Now().Add(1 * time.Minute))},
+				{"branch3", ts(time.Now().Add(2 * time.Minute))},
+				{"branch4", ts(time.Now().Add(3 * time.Minute))},
+			},
+		},
+		{
+			name:      "multiple branches, nonlinear intervals",
+			branches:  []string{"branch1", "branch2", "branch3", "branch4"},
+			intervals: "10m 5m 1m",
+			expectedPrintRows: [][]string{
+				{"branch1", ts(time.Now())},
+				{"branch2", ts(time.Now().Add(10 * time.Minute))},
+				{"branch3", ts(time.Now().Add(15 * time.Minute))},
+				{"branch4", ts(time.Now().Add(16 * time.Minute))},
+			},
+		},
+		{
+			name:      "multiple branches, fewer intervals",
+			branches:  []string{"branch1", "branch2", "branch3", "branch4"},
+			intervals: "10m 5m",
+			expectedPrintRows: [][]string{
+				{"branch1", ts(time.Now())},
+				{"branch2", ts(time.Now().Add(10 * time.Minute))},
+				{"branch3", ts(time.Now().Add(15 * time.Minute))},
+				{"branch4", ts(time.Now().Add(25 * time.Minute))},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cliMock := &mock.CLI{}
+			deploy := &Deploy{
+				c:               cliMock,
+				releaseBranches: test.branches,
+			}
+			intervalDurations, releaseTimer, err := deploy.calculateReleaseTime(test.intervals, "1ms")
+			assert.NoError(t, err)
+
+			releaseTime := *releaseTimer
+
+			deploy.printReleaseTimeBoard(releaseTime, deploy.releaseBranches, intervalDurations)
+			assert.Len(t, cliMock.PrintTableCalls, 1)
+			PrintTableCall := cliMock.PrintTableCalls[0]
+			assert.Equal(t, []string{"Branch", "Start Time"}, PrintTableCall.Header)
+			assert.Equal(t, test.expectedPrintRows, PrintTableCall.Values)
 		})
 	}
 }

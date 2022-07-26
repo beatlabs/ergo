@@ -12,10 +12,21 @@ type CLI struct {
 
 	mu                sync.Mutex
 	ConfirmationCalls int
+	PrintTableCalls   []PrintTableVal
+}
+
+// PrintTableVal represents the values send to the PrintTable method.
+type PrintTableVal struct {
+	Header []string
+	Values [][]string
 }
 
 // PrintTable is a mock implementation.
-func (c *CLI) PrintTable(header []string, values [][]string) {}
+func (c *CLI) PrintTable(header []string, values [][]string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.PrintTableCalls = append(c.PrintTableCalls, PrintTableVal{Header: header, Values: values})
+}
 
 // PrintColorizedLine is a mock implementation.
 func (c *CLI) PrintColorizedLine(title, content string, level ergo.MessageLevel) {}

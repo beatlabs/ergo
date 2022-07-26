@@ -75,6 +75,30 @@ ergo deploy \
 --branches release-pe,release-mx,release-co,release-cl,release-gr
 ```
 
+##### Deploy with custom intervals
+
+If you don't want a linear release interval, for example you want more time between the first and second deployment, you can specify multiple release intervals.
+
+```bash
+ergo deploy \
+--owner dbaltas \
+--repo ergo \
+--releaseInterval 15m,5m,5m,5m \
+--branches release-pe,release-mx,release-co,release-cl,release-gr
+```
+
+Each release will add the next interval, and starts reading the list from the beginning in case releaseInterval list is shorter than the number of branches.
+
+```bash
+Branch      Start Time
+release-pe  12:59 CEST
+release-mx  13:14 CEST
+release-co  13:19 CEST
+release-cl  13:24 CEST
+release-gr  13:29 CEST
+Deployment? [y/N]:
+```
+
 ## Github Access
 To communicate with github you will need a [personal access token](https://github.com/settings/tokens) added on the configuration file as `access-token` on github
 

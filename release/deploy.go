@@ -68,17 +68,17 @@ func (r *Deploy) Do(
 	r.c.PrintLine("Deploying ", release.ReleaseURL)
 	r.c.PrintLine("Deployment start times are estimates.")
 
-	intervalDuration, releaseTimer, err := r.calculateReleaseTime(releaseIntervalInput, releaseOffsetInput)
+	intervalDurations, releaseTimer, err := r.calculateReleaseTime(releaseIntervalInput, releaseOffsetInput)
 	if err != nil {
 		return err
 	}
 
 	releaseTime := *releaseTimer
 
-	r.printReleaseTimeBoard(releaseTime, r.releaseBranches, intervalDuration)
+	r.printReleaseTimeBoard(releaseTime, r.releaseBranches, intervalDurations)
 
 	if skipConfirm {
-		return r.deployToAllReleaseBranches(ctx, intervalDuration, releaseTime, release, allowForcePush)
+		return r.deployToAllReleaseBranches(ctx, intervalDurations, releaseTime, release, allowForcePush)
 	}
 
 	confirm, err := r.c.Confirmation("Deployment", "No deployment", "")
@@ -97,17 +97,18 @@ func (r *Deploy) Do(
 	r.c.PrintLine("Deployment will start in", untilReleaseTime.String())
 	time.Sleep(untilReleaseTime)
 
-	return r.deployToAllReleaseBranches(ctx, intervalDuration, releaseTime, release, allowForcePush)
+	return r.deployToAllReleaseBranches(ctx, intervalDurations, releaseTime, release, allowForcePush)
 }
 
 func (r *Deploy) deployToAllReleaseBranches(
 	ctx context.Context,
-	intervalDuration time.Duration,
+	intervalDurations []time.Duration,
 	releaseTime time.Time,
 	release *ergo.Release,
 	allowForcePush bool,
 ) error {
 	for i, branch := range r.releaseBranches {
+		intervalDuration := intervalDurations[i%len(intervalDurations)]
 		if i != 0 {
 			time.Sleep(intervalDuration)
 			releaseTime = releaseTime.Add(intervalDuration)
@@ -128,31 +129,41 @@ func (r *Deploy) deployToAllReleaseBranches(
 }
 
 // calculateReleaseTime calculate from string the interval between the releases.
-func (r *Deploy) calculateReleaseTime(releaseInterval, releaseOffset string) (time.Duration, *time.Time, error) {
-	intervalDuration, err := time.ParseDuration(releaseInterval)
-	if err != nil {
-		return 0, nil, fmt.Errorf("error parsing interval: %w", err)
+func (r *Deploy) calculateReleaseTime(releaseInterval, releaseOffset string) ([]time.Duration, *time.Time, error) {
+	intervalStrings := strings.Split(releaseInterval, ",")
+	intervalDurations := make([]time.Duration, 0, len(intervalStrings))
+	for _, interval := range intervalStrings {
+		intervalDuration, err := time.ParseDuration(interval)
+		if err != nil {
+			return []time.Duration{}, nil, fmt.Errorf("error parsing interval: %w", err)
+		}
+		intervalDurations = append(intervalDurations, intervalDuration)
+
 	}
 	offsetDuration, err := time.ParseDuration(releaseOffset)
 	if err != nil {
-		return 0, nil, fmt.Errorf("error parsing duration: %w", err)
+		return []time.Duration{}, nil, fmt.Errorf("error parsing duration: %w", err)
+	}
+	if len(intervalDurations) == 0 {
+		return []time.Duration{}, nil, fmt.Errorf("missing required interval durations")
 	}
 	releaseTime := time.Now().Add(offsetDuration)
-	return intervalDuration, &releaseTime, nil
+	return intervalDurations, &releaseTime, nil
 }
 
 // printReleaseTimeBoard print the release time board.
-func (r *Deploy) printReleaseTimeBoard(releaseTime time.Time, releaseBranches []string, intervalDuration time.Duration) {
+func (r *Deploy) printReleaseTimeBoard(releaseTime time.Time, releaseBranches []string, intervalDurations []time.Duration) {
 	var times [][]string
 
-	for _, branch := range releaseBranches {
+	for i, branch := range releaseBranches {
+		interval := intervalDurations[i%len(intervalDurations)]
 		timesRow := []string{branch, releaseTime.Format("15:04 MST")}
-		releaseTime = releaseTime.Add(intervalDuration)
+		releaseTime = releaseTime.Add(interval)
 		times = append(times, timesRow)
 	}
 
 	headers := []string{"Branch", "Start Time"}
-	cli.NewCLI().PrintTable(headers, times)
+	r.c.PrintTable(headers, times)
 }
 
 // updateHostReleaseBody update the host release body.

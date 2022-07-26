@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/beatlabs/ergo/mock"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/beatlabs/ergo"
 	"github.com/beatlabs/ergo/cli"
@@ -24,9 +25,7 @@ func TestNewDeployShouldNotReturnNilObject(t *testing.T) {
 		"",
 		[]string{}, map[string]string{},
 	)
-	if deploy == nil {
-		t.Error("expected Deploy object to not be nil.")
-	}
+	assert.NotNil(t, deploy, "expected Deploy object to not be nil.")
 }
 
 func TestDoShouldNotReturnErrorWithCorrectParameters(t *testing.T) {
@@ -46,9 +45,7 @@ func TestDoShouldNotReturnErrorWithCorrectParameters(t *testing.T) {
 		[]string{}, map[string]string{},
 	).Do(ctx, "10ms", "1ms", false, false, false)
 
-	if err != nil {
-		t.Error("expected to not return error")
-	}
+	assert.NoError(t, err)
 }
 
 func TestDoShouldReturnErrorOnLastRelease(t *testing.T) {
@@ -67,9 +64,7 @@ func TestDoShouldReturnErrorOnLastRelease(t *testing.T) {
 		[]string{}, map[string]string{},
 	).Do(ctx, "10ms", "1ms", false, false, false)
 
-	if err == nil {
-		t.Error("expected to return error")
-	}
+	assert.Error(t, err)
 }
 
 func TestDoShouldReturnErrorOnConfirmation(t *testing.T) {
@@ -91,9 +86,7 @@ func TestDoShouldReturnErrorOnConfirmation(t *testing.T) {
 		[]string{}, map[string]string{},
 	).Do(ctx, "10ms", "1ms", false, false, false)
 
-	if err == nil {
-		t.Error("expected to return error")
-	}
+	assert.Error(t, err)
 }
 
 func TestDoShouldNotReturnErrorWhenNotConfirm(t *testing.T) {
@@ -115,9 +108,7 @@ func TestDoShouldNotReturnErrorWhenNotConfirm(t *testing.T) {
 		[]string{}, map[string]string{},
 	).Do(ctx, "10ms", "1ms", false, false, false)
 
-	if err != nil {
-		t.Error("expected not to return error")
-	}
+	assert.NoError(t, err)
 }
 
 func TestDoShouldReturnErrorWhenReleaseTimeIsPast(t *testing.T) {
@@ -139,9 +130,7 @@ func TestDoShouldReturnErrorWhenReleaseTimeIsPast(t *testing.T) {
 		[]string{}, map[string]string{},
 	).Do(ctx, "1ms", "-1ms", false, false, false)
 
-	if err == nil {
-		t.Error("expected to return error")
-	}
+	assert.Error(t, err)
 }
 
 func TestDoShouldReturnErrorWithBadOffsetTime(t *testing.T) {
@@ -163,9 +152,7 @@ func TestDoShouldReturnErrorWithBadOffsetTime(t *testing.T) {
 		[]string{}, map[string]string{},
 	).Do(ctx, "1ms", "bad", false, false, false)
 
-	if err == nil {
-		t.Error("expected to return error")
-	}
+	assert.Error(t, err)
 }
 
 func TestDoShouldReleaseBranches(t *testing.T) {
@@ -197,9 +184,7 @@ func TestDoShouldReleaseBranches(t *testing.T) {
 		map[string]string{},
 	).Do(ctx, "1ms", "1ms", false, false, false)
 
-	if err != nil {
-		t.Error("expected to not return error")
-	}
+	assert.NoError(t, err)
 }
 
 func TestDoShouldDeployWhenSkippingUserConfirmation(t *testing.T) {
@@ -227,12 +212,10 @@ func TestDoShouldDeployWhenSkippingUserConfirmation(t *testing.T) {
 				[]string{"branch1", "branch2"},
 				map[string]string{},
 			).Do(ctx, "1ms", "1ms", false, tt.skipConfirmation, false)
-			if err != nil {
-				t.Errorf("NewDeploy().Do(skipConfirmation=%t) returned error: %v", tt.skipConfirmation, err)
-			}
-			if got, want := c.ConfirmationCalls, tt.wantConfirmationCalls; got != want {
-				t.Errorf("NewDeploy().Do(skipConfirmation=%t) -> confirmation calls=%d, want: %d", tt.skipConfirmation, got, want)
-			}
+
+			assert.NoErrorf(t, err, "NewDeploy().Do(skipConfirmation=%t) returned error: %v", tt.skipConfirmation, err)
+			got, want := c.ConfirmationCalls, tt.wantConfirmationCalls
+			assert.Equalf(t, want, got, "NewDeploy().Do(skipConfirmation=%t) -> confirmation calls=%d, want: %d", tt.skipConfirmation, got, want)
 		})
 	}
 }
@@ -253,9 +236,7 @@ func TestDoWithPublishDraftEnabledSuccess(t *testing.T) {
 		[]string{"branch1", "branch2"},
 		map[string]string{},
 	).Do(ctx, "1ms", "1ms", false, false, true)
-	if err != nil {
-		t.Errorf("NewDeploy().Do(publishDraft=true) returned error: %v", err)
-	}
+	assert.NoErrorf(t, err, "NewDeploy().Do(publishDraft=true) returned error: %v", err)
 }
 
 func TestDoWithPublishDraftEnabledError(t *testing.T) {
@@ -293,9 +274,7 @@ func TestDoWithPublishDraftEnabledError(t *testing.T) {
 				[]string{"branch1", "branch2"},
 				map[string]string{},
 			).Do(ctx, "1ms", "1ms", false, false, true)
-			if err == nil {
-				t.Errorf("NewDeploy().Do(publishDraft=true) when %q should return error", testName)
-			}
+			assert.Errorf(t, err, "NewDeploy().Do(publishDraft=true) when %q should return error", testName)
 		})
 	}
 }

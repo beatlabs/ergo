@@ -27,7 +27,8 @@ func defineDeployCommand() *cobra.Command {
 	}
 
 	deployCmd.Flags().StringVar(&releaseOffset, "releaseOffset", "1m", "Duration to wait before the first release ('5m', '1h25m', '30s')")
-	deployCmd.Flags().StringVar(&releaseInterval, "releaseInterval", "25m", "Duration to wait between releases. ('5m', '1h25m', '30s')")
+	deployCmd.Flags().StringVar(&releaseInterval, "releaseInterval", "25m", "Duration to wait between releases. ('5m', '1h25m', '30s')\n"+
+		"You can do a non-linear interval by supplying more values: ('15m,10m,5m,5m,5m')")
 	deployCmd.Flags().BoolVar(&allowForcePush, "force", false, "Allow force push if deploy branch has diverged from base")
 	deployCmd.Flags().StringVar(&branchesString, "branches", "", "Comma separated list of branches")
 	deployCmd.Flags().BoolVar(&skipConfirm, "skip-confirmation", false, "Create the draft without asking for user confirmation.")

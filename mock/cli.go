@@ -1,6 +1,8 @@
 package mock
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/beatlabs/ergo"
@@ -13,6 +15,7 @@ type CLI struct {
 	mu                sync.Mutex
 	ConfirmationCalls int
 	PrintTableCalls   []PrintTableVal
+	PrintLines        []string
 }
 
 // PrintTableVal represents the values send to the PrintTable method.
@@ -32,7 +35,13 @@ func (c *CLI) PrintTable(header []string, values [][]string) {
 func (c *CLI) PrintColorizedLine(title, content string, level ergo.MessageLevel) {}
 
 // PrintLine is a mock implementation.
-func (c *CLI) PrintLine(content ...interface{}) {}
+func (c *CLI) PrintLine(content ...interface{}) {
+	words := make([]string, 0, len(content))
+	for _, c := range content {
+		words = append(words, fmt.Sprintf("%v", c))
+	}
+	c.PrintLines = append(c.PrintLines, strings.Join(words, " "))
+}
 
 // Confirmation is a mock implementation.
 func (c *CLI) Confirmation(actionText, cancellationMessage, successMessage string) (bool, error) {

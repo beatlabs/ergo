@@ -354,7 +354,7 @@ func TestNonLinearIntervals(t *testing.T) {
 	}
 }
 
-func TestNonLinearIntervalHandling(t *testing.T) {
+func TestPrintReleaseTimeBoard_NonLinearIntervalHandling(t *testing.T) {
 	ts := func(t time.Time) string {
 		return t.Format("15:04 MST")
 	}
@@ -432,6 +432,58 @@ func TestNonLinearIntervalHandling(t *testing.T) {
 			}
 			if !reflect.DeepEqual(test.expectedPrintRows, PrintTableCall.Values) {
 				t.Errorf("expected %v to equal %v", test.expectedPrintRows, PrintTableCall.Values)
+			}
+		})
+	}
+}
+
+func TestDeployToAllReleaseBranches_NonLinearIntervalHandling(t *testing.T) {
+	ts := func(t time.Time) string {
+		return t.Format("15:04:05")
+	}
+	releaseTime := time.Date(2022, 8, 4, 13, 37, 0, 0, time.UTC)
+	tests := []struct {
+		name           string
+		branches       []string
+		intervals      string
+		expectedPrints []string
+	}{
+		{
+			name:      "single branch, single interval",
+			branches:  []string{"branch1"},
+			intervals: "1m",
+			expectedPrints: []string{
+				fmt.Sprintf("Deploying %v branch1", ts(releaseTime)),
+				fmt.Sprintf("%v Triggered Successfully", ts(releaseTime)),
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cliMock := &mock.CLI{}
+			deploy := &Deploy{
+				c:               cliMock,
+				releaseBranches: test.branches,
+				host:            &mock.RepositoryClient{},
+				time:            mock.NewMockedTime(releaseTime),
+			}
+			intervalDurations, _, err := deploy.calculateReleaseTime(test.intervals, "1ms")
+			if err != nil {
+				t.Errorf("NewDeploy().Do() returned error: %v", err)
+			}
+			err = deploy.deployToAllReleaseBranches(context.Background(), intervalDurations, &ergo.Release{}, false)
+			if err != nil {
+				t.Errorf("Deploy.deployToAllReleaseBranches() returned error %v", err)
+			}
+			if len(test.expectedPrints) != len(cliMock.PrintLines) {
+				t.Errorf("Expected %d number of prints to the mock, got %d", len(test.expectedPrints), len(cliMock.PrintLines))
+			} else {
+				for i, expected := range test.expectedPrints {
+					got := cliMock.PrintLines[i]
+					if !reflect.DeepEqual(expected, got) {
+						t.Errorf("Expected print %d: '%v' to equal '%v'", i, expected, got)
+					}
+				}
 			}
 		})
 	}

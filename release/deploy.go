@@ -9,6 +9,7 @@ import (
 
 	"github.com/beatlabs/ergo"
 	"github.com/beatlabs/ergo/cli"
+	ergoTime "github.com/beatlabs/ergo/time"
 )
 
 // Deploy is responsible to describe the release process.
@@ -20,6 +21,7 @@ type Deploy struct {
 	releaseBodyReplace  string
 	releaseBranches     []string
 	releaseBodyBranches map[string]string
+	time                ergo.Time
 }
 
 // NewDeploy initialize and return a new Deploy object.
@@ -38,6 +40,7 @@ func NewDeploy(
 		releaseBodyReplace:  releaseBodyReplace,
 		releaseBranches:     releaseBranches,
 		releaseBodyBranches: releaseBodyBranches,
+		time:                ergoTime.Time{},
 	}
 }
 
@@ -95,7 +98,7 @@ func (r *Deploy) Do(
 
 	untilReleaseTime := time.Until(releaseTime)
 	r.c.PrintLine("Deployment will start in", untilReleaseTime.String())
-	time.Sleep(untilReleaseTime)
+	r.time.Sleep(untilReleaseTime)
 
 	return r.deployToAllReleaseBranches(ctx, intervalDurations, release, allowForcePush)
 }
@@ -109,14 +112,14 @@ func (r *Deploy) deployToAllReleaseBranches(
 	for i, branch := range r.releaseBranches {
 		intervalDuration := intervalDurations[i%len(intervalDurations)]
 		if i != 0 {
-			time.Sleep(intervalDuration)
+			r.time.Sleep(intervalDuration)
 		}
-		r.c.PrintLine("Deploying", time.Now().Format("15:04:05"), branch)
+		r.c.PrintLine("Deploying", r.time.Now().Format("15:04:05"), branch)
 
 		if errRelease := r.host.UpdateBranchFromTag(ctx, release.TagName, branch, allowForcePush); errRelease != nil {
 			return errRelease
 		}
-		r.c.PrintLine(time.Now().Format("15:04:05"), "Triggered Successfully")
+		r.c.PrintLine(r.time.Now().Format("15:04:05"), "Triggered Successfully")
 
 		err := r.updateHostReleaseBody(ctx, r.releaseBodyBranches, branch, r.releaseBodyFind, r.releaseBodyReplace)
 		if err != nil {

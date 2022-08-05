@@ -443,29 +443,80 @@ func TestDeployToAllReleaseBranches_NonLinearIntervalHandling(t *testing.T) {
 	}
 	releaseTime := time.Date(2022, 8, 4, 13, 37, 0, 0, time.UTC)
 	tests := []struct {
-		name           string
-		branches       []string
-		intervals      string
-		expectedPrints []string
+		name              string
+		branches          []string
+		intervals         string
+		expectedPrints    []string
+		expectedFinalTime time.Time
 	}{
 		{
 			name:      "single branch, single interval",
 			branches:  []string{"branch1"},
-			intervals: "1m",
+			intervals: "10m",
 			expectedPrints: []string{
 				fmt.Sprintf("Deploying %v branch1", ts(releaseTime)),
 				fmt.Sprintf("%v Triggered Successfully", ts(releaseTime)),
 			},
+			expectedFinalTime: releaseTime,
+		},
+		{
+			name:      "multiple branches, single interval",
+			branches:  []string{"branch1", "branch2"},
+			intervals: "10m",
+			expectedPrints: []string{
+				fmt.Sprintf("Deploying %v branch1", ts(releaseTime)),
+				fmt.Sprintf("%v Triggered Successfully", ts(releaseTime)),
+				fmt.Sprintf("Deploying %v branch2", ts(releaseTime.Add(10*time.Minute))),
+				fmt.Sprintf("%v Triggered Successfully", ts(releaseTime.Add(10*time.Minute))),
+			},
+			expectedFinalTime: releaseTime.Add(10 * time.Minute),
+		},
+		{
+			name:      "multiple branches, decreasing interval",
+			branches:  []string{"branch1", "branch2", "branch3", "branch4", "branch5"},
+			intervals: "10m,5m,1m,1m",
+			expectedPrints: []string{
+				fmt.Sprintf("Deploying %v branch1", ts(releaseTime)),
+				fmt.Sprintf("%v Triggered Successfully", ts(releaseTime)),
+				fmt.Sprintf("Deploying %v branch2", ts(releaseTime.Add(10*time.Minute))), // 10
+				fmt.Sprintf("%v Triggered Successfully", ts(releaseTime.Add(10*time.Minute))),
+				fmt.Sprintf("Deploying %v branch3", ts(releaseTime.Add(15*time.Minute))), // 10 + 5
+				fmt.Sprintf("%v Triggered Successfully", ts(releaseTime.Add(15*time.Minute))),
+				fmt.Sprintf("Deploying %v branch4", ts(releaseTime.Add(16*time.Minute))), // 10 + 5 + 1
+				fmt.Sprintf("%v Triggered Successfully", ts(releaseTime.Add(16*time.Minute))),
+				fmt.Sprintf("Deploying %v branch5", ts(releaseTime.Add(17*time.Minute))), // 10 + 5 + 1 + 1
+				fmt.Sprintf("%v Triggered Successfully", ts(releaseTime.Add(17*time.Minute))),
+			},
+			expectedFinalTime: releaseTime.Add(17 * time.Minute),
+		},
+		{
+			name:      "multiple branches, fewer intervals",
+			branches:  []string{"branch1", "branch2", "branch3", "branch4", "branch5"},
+			intervals: "10m,5m",
+			expectedPrints: []string{
+				fmt.Sprintf("Deploying %v branch1", ts(releaseTime)),
+				fmt.Sprintf("%v Triggered Successfully", ts(releaseTime)),
+				fmt.Sprintf("Deploying %v branch2", ts(releaseTime.Add(10*time.Minute))), // 10
+				fmt.Sprintf("%v Triggered Successfully", ts(releaseTime.Add(10*time.Minute))),
+				fmt.Sprintf("Deploying %v branch3", ts(releaseTime.Add(15*time.Minute))), // 10 + 5
+				fmt.Sprintf("%v Triggered Successfully", ts(releaseTime.Add(15*time.Minute))),
+				fmt.Sprintf("Deploying %v branch4", ts(releaseTime.Add(25*time.Minute))), // 10 + 5 + 10
+				fmt.Sprintf("%v Triggered Successfully", ts(releaseTime.Add(25*time.Minute))),
+				fmt.Sprintf("Deploying %v branch5", ts(releaseTime.Add(30*time.Minute))), // 10 + 5 + 10 + 5
+				fmt.Sprintf("%v Triggered Successfully", ts(releaseTime.Add(30*time.Minute))),
+			},
+			expectedFinalTime: releaseTime.Add(30 * time.Minute),
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			cliMock := &mock.CLI{}
+			timeMock := mock.NewMockedTime(releaseTime)
 			deploy := &Deploy{
 				c:               cliMock,
 				releaseBranches: test.branches,
 				host:            &mock.RepositoryClient{},
-				time:            mock.NewMockedTime(releaseTime),
+				time:            timeMock,
 			}
 			intervalDurations, _, err := deploy.calculateReleaseTime(test.intervals, "1ms")
 			if err != nil {
@@ -484,6 +535,9 @@ func TestDeployToAllReleaseBranches_NonLinearIntervalHandling(t *testing.T) {
 						t.Errorf("Expected print %d: '%v' to equal '%v'", i, expected, got)
 					}
 				}
+			}
+			if test.expectedFinalTime != timeMock.CurrentTime {
+				t.Errorf("Expected final time to equal %v, got %v", test.expectedFinalTime, timeMock.CurrentTime)
 			}
 		})
 	}

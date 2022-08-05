@@ -110,10 +110,6 @@ func (r *Deploy) deployToAllReleaseBranches(
 	allowForcePush bool,
 ) error {
 	for i, branch := range r.releaseBranches {
-		intervalDuration := intervalDurations[i%len(intervalDurations)]
-		if i != 0 {
-			r.time.Sleep(intervalDuration)
-		}
 		r.c.PrintLine("Deploying", r.time.Now().Format("15:04:05"), branch)
 
 		if errRelease := r.host.UpdateBranchFromTag(ctx, release.TagName, branch, allowForcePush); errRelease != nil {
@@ -124,6 +120,12 @@ func (r *Deploy) deployToAllReleaseBranches(
 		err := r.updateHostReleaseBody(ctx, r.releaseBodyBranches, branch, r.releaseBodyFind, r.releaseBodyReplace)
 		if err != nil {
 			return err
+		}
+
+		// Don't sleep after the last deployment
+		if i < (len(r.releaseBranches) - 1) {
+			intervalDuration := intervalDurations[i%len(intervalDurations)]
+			r.time.Sleep(intervalDuration)
 		}
 	}
 	return nil

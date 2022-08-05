@@ -78,7 +78,7 @@ func (r *Deploy) Do(
 	r.printReleaseTimeBoard(releaseTime, r.releaseBranches, intervalDurations)
 
 	if skipConfirm {
-		return r.deployToAllReleaseBranches(ctx, intervalDurations, releaseTime, release, allowForcePush)
+		return r.deployToAllReleaseBranches(ctx, intervalDurations, release, allowForcePush)
 	}
 
 	confirm, err := r.c.Confirmation("Deployment", "No deployment", "")
@@ -97,13 +97,12 @@ func (r *Deploy) Do(
 	r.c.PrintLine("Deployment will start in", untilReleaseTime.String())
 	time.Sleep(untilReleaseTime)
 
-	return r.deployToAllReleaseBranches(ctx, intervalDurations, releaseTime, release, allowForcePush)
+	return r.deployToAllReleaseBranches(ctx, intervalDurations, release, allowForcePush)
 }
 
 func (r *Deploy) deployToAllReleaseBranches(
 	ctx context.Context,
 	intervalDurations []time.Duration,
-	releaseTime time.Time,
 	release *ergo.Release,
 	allowForcePush bool,
 ) error {
@@ -111,7 +110,6 @@ func (r *Deploy) deployToAllReleaseBranches(
 		intervalDuration := intervalDurations[i%len(intervalDurations)]
 		if i != 0 {
 			time.Sleep(intervalDuration)
-			releaseTime = releaseTime.Add(intervalDuration)
 		}
 		r.c.PrintLine("Deploying", time.Now().Format("15:04:05"), branch)
 

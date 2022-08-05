@@ -1,6 +1,9 @@
 package ergo
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // MessageLevel defines the level of output message.
 type MessageLevel string
@@ -27,6 +30,12 @@ type CLI interface {
 	PrintLine(content ...interface{})
 	Confirmation(actionText, cancellationMessage, successMessage string) (bool, error)
 	Input() (string, error)
+}
+
+// Time describes actions around time and waiting.
+type Time interface {
+	Sleep(duration time.Duration)
+	Now() time.Time
 }
 
 // Deploy describes the deploy process.
